@@ -1,7 +1,6 @@
 package com.firstapp.expense_tracker
 
 import NavigationBar
-
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -33,17 +32,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-
+@Composable
+fun MyScreen(navController: NavController) {
+    // Your implementation for the screen content goes here
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Text(text = "This is My Screen")
+    }
+}
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ExpenseTrackerScreen(
     onAddExpenseClick: () -> Unit,
     expenseRecords: List<ExpenseRecord>,
     onViewRecordsClick: () -> Unit,
-    onSetBudgetClick:()->Unit
+    onSetBudgetClick:()->Unit,
+    navController:NavController
 ) {
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     var selectedBottomTabIndex by remember { mutableIntStateOf(0) }
@@ -51,7 +60,6 @@ fun ExpenseTrackerScreen(
     var currentDate by remember { mutableStateOf(LocalDate.now()) }
     //val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy")
     var budget by remember { mutableDoubleStateOf(5000.0) }
-
 
     var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
     val formatter = DateTimeFormatter.ofPattern("MMM yyyy")
@@ -126,9 +134,21 @@ fun ExpenseTrackerScreen(
                 )
             }
         }
-        BottomNavBar(selectedTabIndex = selectedBottomTabIndex) { index ->
-            selectedBottomTabIndex = index
-            // Handle bottom tab click
-        }
+        BottomNavBar(
+            selectedTabIndex = selectedBottomTabIndex,
+            onTabSelected = { index ->
+                selectedBottomTabIndex = index
+                // Navigate to the corresponding screen based on the selected index
+//                when (index) {
+//                    0 -> navController.navigate(Screen.Home.route)
+//                    1 -> navController.navigate(Screen.Accounts.route)
+//                    2 -> navController.navigate(Screen.Analysis.route)
+//                    3 -> navController.navigate(Screen.Debts.route)
+//                    // Add more cases if you have additional tabs
+//                }
+            }
+        )
+//        MyScreen(navController = navController)
     }
 }
+

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/home">
+
+    <fragment
+        android:id="@+id/home"
+        android:name="com.firstapp.expense_tracker.HomeScreen"
+        android:label="Home"
+        tools:layout="@layout/home_fragment" />
+
+<!--    <fragment-->
+<!--        android:id="@+id/accounts"-->
+<!--        android:name="com.firstapp.expense_tracker.AccountsScreen"-->
+<!--        android:label="Accounts"-->
+<!--        tools:layout="@layout/accounts_fragment" />-->
+
+<!--    <fragment-->
+<!--        android:id="@+id/analysis"-->
+<!--        android:name="com.firstapp.expense_tracker.AnalysisScreen"-->
+<!--        android:label="Analysis"-->
+<!--        tools:layout="@layout/analysis_fragment" />-->
+
+    <fragment
+        android:id="@+id/debts"
+        android:name="com.firstapp.expense_tracker.DebtsCred"
+        android:label="Debts"
+        tools:layout="@layout/debts_fragment" />
+
+</navigation>

@@ -1,4 +1,3 @@
-package com.firstapp.expense_tracker
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,7 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-
+import com.firstapp.expense_tracker.R
+import com.firstapp.expense_tracker.Screen
 
 @Composable
 fun BottomNavBar(
@@ -41,32 +41,27 @@ fun BottomNavBar(
             val isSelected = selectedTabIndex == index
             val color = if (isSelected) Color.White else Color.LightGray
 
-            Row(
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFFF5722))
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                tabs.forEachIndexed { index, screen ->
-                    // Your existing code for handling tab selection
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(8.dp)
-                            .clickable { onTabSelected(index) }
+                    .weight(1f)
+                    .padding(8.dp)
+                    .clickable {
+                        onTabSelected(index)
+                        if (index == tabs.indexOf(Screen.Debts)) {
+                            // Navigate to "debts" destination when Debts tab is clicked
 
-                    ) {
-                        Icon(
-                            painter = painterResource(id = icons[index]),
-                            contentDescription = screen.toString(),
-                            tint = color,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        }
                     }
-                }
+
+            ) {
+                Icon(
+                    painter = painterResource(id = icons[index]),
+                    contentDescription = title.toString(),
+                    tint = color,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
-        }
     }
+}

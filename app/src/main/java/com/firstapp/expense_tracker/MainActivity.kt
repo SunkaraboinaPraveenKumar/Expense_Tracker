@@ -1,7 +1,7 @@
 package com.firstapp.expense_tracker
-
 import BudgetedCategoriesScreen
 import BudgetedCategory
+import DebtsScreen
 import SetBudgetCard
 import android.os.Build
 import android.os.Bundle
@@ -12,7 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.navigation.compose.rememberNavController
+import com.example.myapp.ui.screens.MyApp
 import com.firstapp.expense_tracker.ui.theme.Expense_TrackerTheme
 
 class MainActivity : ComponentActivity() {
@@ -24,11 +24,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             Expense_TrackerTheme {
-                val navController = rememberNavController() // Initialize NavControlle
                 var showAddExpenseScreen by remember { mutableStateOf(false) }
                 var showViewRecordsScreen by remember { mutableStateOf(false) }
                 var showSetBudgetScreen by remember { mutableStateOf(false) }
                 var showBudgetedCategoriesScreen by remember { mutableStateOf(false) }
+                var showDebtsScreen by remember { mutableStateOf(false) }
+                var showAnalysisScreen by remember { mutableStateOf(false) }
+               // val navController = rememberNavController()
 
                 when {
                     showSetBudgetScreen -> {
@@ -47,11 +49,11 @@ class MainActivity : ComponentActivity() {
                     showBudgetedCategoriesScreen -> {
                         BudgetedCategoriesScreen(
                             budgetedCategories = budgetedCategories,
-                            onBack = {
-                                // Set showBudgetedCategoriesScreen to false when navigating back
-                                showBudgetedCategoriesScreen = false
-                            }
-                        )
+                            expenseRecordsBudgeted = expenseRecords
+                        ) {
+                            // Set showBudgetedCategoriesScreen to false when navigating back
+                            showBudgetedCategoriesScreen = false
+                        }
                     }
                     showAddExpenseScreen -> {
                         AddExpenseScreen(
@@ -67,13 +69,21 @@ class MainActivity : ComponentActivity() {
                             onBack = { showViewRecordsScreen = false }
                         )
                     }
+                    showDebtsScreen -> {
+                        DebtsScreen(onBack = {showDebtsScreen=false})
+                    }
+                    showAnalysisScreen->{
+                        MyApp(onBack = {showAnalysisScreen=false},
+                            expenseRecords=expenseRecords)
+                    }
                     else -> {
                         ExpenseTrackerScreen(
                             onAddExpenseClick = { showAddExpenseScreen = true },
                             onViewRecordsClick = { showViewRecordsScreen = true },
                             expenseRecords = expenseRecords,
                             onSetBudgetClick = { showSetBudgetScreen = true },
-                            navController = navController // Pass NavController as a parameter
+                            onViewDebtsClick = { showDebtsScreen = true }, // Ensure this is correct
+                            onViewAnalysisClick = {showAnalysisScreen=true},
                         )
                     }
                 }

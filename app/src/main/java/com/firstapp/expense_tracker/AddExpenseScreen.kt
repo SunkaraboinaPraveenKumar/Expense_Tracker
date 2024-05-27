@@ -4,15 +4,40 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.time.LocalDateTime
+import java.time.YearMonth
 import java.time.format.DateTimeFormatter
-
+@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddExpenseScreen(
@@ -21,7 +46,7 @@ fun AddExpenseScreen(
 ) {
     var accountType by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("") }
-    var amount by remember { mutableDoubleStateOf(0.0) }
+    var amount by remember { mutableStateOf("") }
     val dateTime by remember { mutableStateOf(LocalDateTime.now()) }
     var isIncome by remember { mutableStateOf(false) }
     val notes by remember { mutableStateOf("") }
@@ -39,6 +64,8 @@ fun AddExpenseScreen(
     )
     val accountTypes = listOf("Card", "Cash", "Savings")
 
+    val textColor = if (isSystemInDarkTheme()) Color.White else Color.Black
+
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -51,10 +78,11 @@ fun AddExpenseScreen(
                 val record = ExpenseRecord(
                     accountType = accountType,
                     category = category,
-                    amount = amount,
+                    amount = amount.toDoubleOrNull() ?: 0.0,
                     dateTime = dateTime,
                     isIncome = isIncome,
-                    notes = notes
+                    notes = notes,
+                    date= YearMonth.now()
                 )
                 onSave(record)
             }) {
@@ -68,7 +96,7 @@ fun AddExpenseScreen(
             TextButton(
                 onClick = { isIncome = true },
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = if (isIncome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    contentColor = if (isIncome) MaterialTheme.colorScheme.primary else textColor
                 )
             ) {
                 Text(text = "Income", fontSize = 18.sp)
@@ -76,7 +104,7 @@ fun AddExpenseScreen(
             TextButton(
                 onClick = { isIncome = false },
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = if (!isIncome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    contentColor = if (!isIncome) MaterialTheme.colorScheme.primary else textColor
                 )
             ) {
                 Text(text = "Expense", fontSize = 18.sp)
@@ -85,8 +113,12 @@ fun AddExpenseScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text(text = if (isIncome) "Add Income" else "Add Expense", fontSize = 24.sp, modifier = Modifier.padding(16.dp))
-
+        Text(
+            text = if (isIncome) "Add Income" else "Add Expense",
+            fontSize = 24.sp,
+            color = Color(0xFFFFA500), // Orange color
+            modifier = Modifier.padding(16.dp)
+        )
         DropdownMenuField(
             options = accountTypes,
             selectedOption = accountType,
@@ -102,21 +134,24 @@ fun AddExpenseScreen(
         )
 
         TextField(
-            value = amount.toString(),
-            onValueChange = { amount = it.toDoubleOrNull() ?: 0.0 },
+            value = amount,
+            onValueChange = { amount = it },
             label = { Text("Amount") },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            textStyle = LocalTextStyle.current.copy(color = Color.Black)
         )
         Text(
             text = "Date & Time: ${dateTime.format(formatter)}",
             fontSize = 16.sp,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 8.dp),
+            color = textColor
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
         Calculator { newAmount ->
-            amount = newAmount
+            amount = newAmount.toString()
         }
     }
 }

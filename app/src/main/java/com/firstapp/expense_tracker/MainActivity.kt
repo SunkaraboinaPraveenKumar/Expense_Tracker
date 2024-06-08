@@ -2,7 +2,6 @@ package com.firstapp.expense_tracker
 import BudgetedCategoriesScreen
 import BudgetedCategory
 import DebtsScreen
-import SetBudgetCard
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity

@@ -23,8 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -82,7 +80,7 @@ fun ExpenseRecordItem(record: ExpenseRecord) {
     val color = if (record.isIncome) Color.Green else Color.Red
     val sign = if (record.isIncome) "+" else "-"
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-    val icon: Painter = painterResource(id = R.drawable.ic_account_balance_wallet) // Replace with actual icon
+
 
     Column(
         modifier = Modifier
@@ -111,12 +109,11 @@ fun ExpenseRecordItem(record: ExpenseRecord) {
                 .padding(8.dp)
         ) {
             Image(
-                painter = icon,
+                painter = painterResource(id = record.icon),
                 contentDescription = "Category Icon",
                 modifier = Modifier
                     .size(40.dp)
-                    .padding(8.dp),
-                colorFilter = ColorFilter.tint(color)
+                    .padding(8.dp)
             )
 
             Column(modifier = Modifier

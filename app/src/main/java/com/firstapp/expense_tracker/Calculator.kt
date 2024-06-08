@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -36,13 +37,12 @@ fun Calculator(onValueChange: (Double) -> Unit) {
     )
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)  // Reduced padding for overall layout
+        modifier = Modifier.fillMaxSize()
+            .padding(0.dp)// Reduced padding for overall layout
     ) {
         Text(
             text = displayValue,
-            fontSize = 28.sp,  // Slightly smaller font size
+            fontSize = 30.sp,  // Slightly smaller font size
             color = Color.Blue,
             modifier = Modifier
                 .padding(8.dp)  // Reduced padding for display
@@ -53,8 +53,9 @@ fun Calculator(onValueChange: (Double) -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp),  // Padding between rows
-                horizontalArrangement = Arrangement.SpaceEvenly
+                    .padding(vertical = 5.dp),  // Padding between rows
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 row.forEach { button ->
                     CalculatorButton(buttonText = button) {

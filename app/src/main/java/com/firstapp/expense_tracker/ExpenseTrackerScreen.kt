@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -118,7 +117,6 @@ fun ExpenseTrackerScreen(
                 Text(text = "View Analysis", fontSize = 18.sp) // Increased text size
             }
         }
-        Spacer(modifier = Modifier.weight(1f))
         Box(
             contentAlignment = Alignment.BottomEnd,
             modifier = Modifier

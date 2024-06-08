@@ -2,7 +2,7 @@ package com.firstapp.expense_tracker
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -15,9 +15,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -37,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -66,7 +70,9 @@ fun AddExpenseScreen(
 
     val textColor = if (isSystemInDarkTheme()) Color.White else Color.Black
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -138,7 +144,9 @@ fun AddExpenseScreen(
             onValueChange = { amount = it },
             label = { Text("Amount") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
             textStyle = LocalTextStyle.current.copy(color = Color.Black)
         )
         Text(
@@ -156,7 +164,6 @@ fun AddExpenseScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DropdownMenuField(
     options: List<String>,
@@ -165,18 +172,29 @@ fun DropdownMenuField(
     label: String
 ) {
     var expanded by remember { mutableStateOf(false) }
-
+    val backgroundColor = Color(0xFFADD8E6) // Light gray color
     Box {
-        TextField(
-            value = selectedOption,
-            onValueChange = { },
-            label = { Text(label) },
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
+                .background(backgroundColor)
                 .clickable { expanded = true },
-            readOnly = true
-        )
+            color = backgroundColor
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .clickable { expanded = true },
+                horizontalArrangement = Arrangement.SpaceBetween,
+
+                ) {
+                Text(text = if (selectedOption.isEmpty()) label else selectedOption)
+                // You can add an icon here to indicate the dropdown
+                Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null)
+            }
+        }
 
         DropdownMenu(
             expanded = expanded,

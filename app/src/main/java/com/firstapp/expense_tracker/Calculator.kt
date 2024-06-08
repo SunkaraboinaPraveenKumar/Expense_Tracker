@@ -28,25 +28,32 @@ fun Calculator(onValueChange: (Double) -> Unit) {
     var displayValue by remember { mutableStateOf("0") }
 
     val buttons = listOf(
-        listOf("C", "7", "8", "9", "/"),
-        listOf("4", "5", "6", "*"),
-        listOf("1", "2", "3", "-"),
-        listOf("0", ".", "=", "+")
+        listOf("AC", "C", "+/-", "/"),
+        listOf("7", "8", "9", "*"),
+        listOf("4", "5", "6", "-"),
+        listOf("1", "2", "3", "+"),
+        listOf("%", "0", ".", "=")
     )
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)  // Reduced padding for overall layout
+    ) {
         Text(
             text = displayValue,
-            fontSize = 32.sp,
+            fontSize = 28.sp,  // Slightly smaller font size
             color = Color.Blue,
             modifier = Modifier
-                .padding(16.dp)
+                .padding(8.dp)  // Reduced padding for display
                 .fillMaxWidth(),
             textAlign = TextAlign.End
         )
         buttons.forEach { row ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),  // Padding between rows
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 row.forEach { button ->
@@ -67,12 +74,12 @@ fun CalculatorButton(buttonText: String, onClick: () -> Unit) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .padding(8.dp)
-            .size(64.dp)
-            .background(Color.Gray, RoundedCornerShape(8.dp))
+            .padding(2.dp)  // Reduced padding for buttons
+            .size(50.dp)  // Smaller button size to fit evenly
+            .background(Color.Gray, RoundedCornerShape(8.dp))  // Keep corner radius consistent
             .clickable { onClick() }
     ) {
-        Text(text = buttonText, fontSize = 24.sp, color = Color.White)
+        Text(text = buttonText, fontSize = 18.sp, color = Color.White)  // Adjusted text size
     }
 }
 
@@ -87,6 +94,15 @@ fun handleButtonPress(currentDisplay: String, button: String): String {
                 "Error"
             }
         }
+        "AC" -> "0" // Adding functionality to reset the calculator
+        "+/-" -> if (currentDisplay.startsWith("-")) currentDisplay.drop(1) else "-$currentDisplay" // Adding functionality to change sign
+        "%" -> {
+            try {
+                (currentDisplay.toDouble() / 100).toString()
+            } catch (e: Exception) {
+                "Error"
+            }
+        }
         else -> {
             if (currentDisplay == "0" && button != ".") {
                 button
@@ -96,4 +112,3 @@ fun handleButtonPress(currentDisplay: String, button: String): String {
         }
     }
 }
-

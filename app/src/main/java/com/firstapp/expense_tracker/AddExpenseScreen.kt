@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +45,6 @@ import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 data class Icon(val name: String, val resourceId: Int)
-@OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddExpenseScreen(
@@ -58,7 +56,8 @@ fun AddExpenseScreen(
     var amount by remember { mutableStateOf("") }
     val dateTime by remember { mutableStateOf(LocalDateTime.now()) }
     var isIncome by remember { mutableStateOf(false) }
-    val notes by remember { mutableStateOf("") }
+    var notes by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf("") }
 
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
@@ -74,12 +73,12 @@ fun AddExpenseScreen(
     val accountTypes = listOf("Card", "Cash", "Savings")
 
     val textColor = if (isSystemInDarkTheme()) Color.White else Color.Black
-    val accountList: MutableList<Icon> = mutableListOf(
+    val accountList = listOf(
         Icon("Card", R.drawable.credit_card),
         Icon("Cash", R.drawable.money),
         Icon("Savings", R.drawable.piggy_bank)
     )
-    val incomeList: MutableList<Icon> = mutableListOf(
+    val incomeList = listOf(
         Icon("Awards", R.drawable.trophy),
         Icon("Coupons", R.drawable.coupons),
         Icon("Grants", R.drawable.grants),
@@ -90,7 +89,7 @@ fun AddExpenseScreen(
         Icon("Sale", R.drawable.sale)
     )
 
-    val expenseList: MutableList<Icon> = mutableListOf(
+    val expenseList = listOf(
         Icon("Baby", R.drawable.milk_bottle),
         Icon("Beauty", R.drawable.beauty),
         Icon("Bills", R.drawable.bill),
@@ -109,6 +108,14 @@ fun AddExpenseScreen(
         Icon("Transportation", R.drawable.transportation)
     )
 
+    fun validateInputs(): Boolean {
+        if (accountType.isEmpty() || category.isEmpty() || amount.isEmpty() || amount.toDoubleOrNull() == null) {
+            errorMessage = "All fields must be filled correctly."
+            return false
+        }
+        return true
+    }
+
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(16.dp)) {
@@ -120,17 +127,25 @@ fun AddExpenseScreen(
                 Text(text = "Cancel", fontSize = 16.sp)
             }
             TextButton(onClick = {
-                val record = ExpenseRecord(
-                    accountType = accountType,
-                    category = category,
-                    amount = amount.toDoubleOrNull() ?: 0.0,
-                    dateTime = dateTime,
-                    isIncome = isIncome,
-                    notes = notes,
-                    date = YearMonth.now(),
-                    icon = if (isIncome) incomeList.find { it.name == category }?.resourceId ?: R.drawable.ic_account_balance_wallet else expenseList.find { it.name == category }?.resourceId ?: R.drawable.ic_account_balance_wallet
-                )
-                onSave(record)
+                if (validateInputs()) {
+                    val record = (if (isIncome) incomeList.find { it.name == category }?.resourceId
+                    else expenseList.find { it.name == category }?.resourceId
+                        ?: R.drawable.ic_account_balance_wallet)?.let {
+                        ExpenseRecord(
+                            accountType = accountType,
+                            category = category,
+                            amount = amount.toDouble(),
+                            dateTime = dateTime,
+                            isIncome = isIncome,
+                            notes = notes,
+                            date = YearMonth.now(),
+                            icon = it
+                        )
+                    }
+                    if (record != null) {
+                        onSave(record)
+                    }
+                }
             }) {
                 Text(text = "Save", fontSize = 16.sp)
             }
@@ -169,6 +184,7 @@ fun AddExpenseScreen(
             color = Color(0xFFFFA500), // Orange color
             modifier = Modifier.padding(16.dp)
         )
+
         DropdownMenuField(
             options = accountTypes,
             selectedOption = accountType,
@@ -196,6 +212,7 @@ fun AddExpenseScreen(
             textStyle = LocalTextStyle.current.copy(color = Color.Black),
             singleLine = true
         )
+
         Text(
             text = "Date & Time: ${dateTime.format(formatter)}",
             fontSize = 16.sp,
@@ -208,18 +225,29 @@ fun AddExpenseScreen(
                 amount = newAmount.toString()
             }
         }
+
+        if (errorMessage.isNotEmpty()) {
+            Text(
+                text = errorMessage,
+                color = Color.Red,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
     }
 }
+
 @Composable
 fun DropdownMenuField(
     options: List<String>,
     selectedOption: String,
     onOptionSelected: (String) -> Unit,
     label: String,
-    passList:List<Icon>
+    passList: List<Icon>
 ) {
     var expanded by remember { mutableStateOf(false) }
     val backgroundColor = Color(0xFFADD8E6) // Light gray color
+
     Box {
         Surface(
             modifier = Modifier
@@ -235,20 +263,18 @@ fun DropdownMenuField(
                     .padding(16.dp)
                     .clickable { expanded = true },
                 horizontalArrangement = Arrangement.SpaceBetween,
-
-                ) {
+            ) {
                 Text(text = if (selectedOption.isEmpty()) label else selectedOption)
-                // You can add an icon here to indicate the dropdown
                 Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null)
             }
         }
+
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-
             options.forEach { option ->
-                val icon=passList.find{it.name==option}
+                val icon = passList.find { it.name == option }
                 if (icon != null) {
                     DropdownMenuItem(
                         icon = icon.resourceId,

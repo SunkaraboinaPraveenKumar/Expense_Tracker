@@ -1,4 +1,3 @@
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -17,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.firstapp.expense_tracker.R
@@ -57,7 +58,7 @@ fun SettingsMenu(
             )
         }
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "Settings",modifier = Modifier.clickable {  })
+        Text(text = "Settings",modifier = Modifier.clickable { onSettingsClick })
     }
 
     Row(
@@ -71,7 +72,7 @@ fun SettingsMenu(
                 modifier = Modifier.size(24.dp)
             )
         }
-        Text(text = "Delete",modifier = Modifier.clickable {  })
+        Text(text = "Delete",modifier = Modifier.clickable { onDeleteResetClick })
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -84,7 +85,7 @@ fun SettingsMenu(
                 modifier = Modifier.size(24.dp)
             )
         }
-        Text(text = "Help",modifier = Modifier.clickable {  })
+        Text(text = "Help",modifier = Modifier.clickable { onHelpClick })
     }
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -97,6 +98,6 @@ fun SettingsMenu(
                 modifier = Modifier.size(24.dp)
             )
         }
-        Text(text = "Add New Categories",modifier = Modifier.clickable {  })
+        Text(text = "Add New Categories",modifier = Modifier.clickable { onAddNewCategoriesClick })
     }
 }

@@ -80,22 +80,6 @@ fun MainScreen(onIncomeClick: () -> Unit, onExpenseClick: () -> Unit, onBack:()-
 fun MyApp(expenseRecords:List<ExpenseRecord>,onBack:()->Unit) {
     var currentScreen by remember { mutableStateOf("main") }
     var analysisType by remember { mutableStateOf("") }
-//    Row(
-//        modifier = Modifier.fillMaxWidth(),
-//        horizontalArrangement = Arrangement.SpaceBetween
-//    ) {
-//        TextButton(onClick = onBack) {
-//            Text(text = "Back", fontSize = 16.sp)
-//        }
-//        IconButton(onClick = onBack) {
-//            Icon(
-//                imageVector = Icons.Default.ArrowBack,
-//                contentDescription = "Back",
-//                tint = Color.Black
-//            )
-//        }
-//    }
-
     when (currentScreen) {
         "main" -> MainScreen(
             onIncomeClick = {

@@ -1,6 +1,5 @@
 package com.firstapp.expense_tracker
 
-import BottomNavBar
 import SettingsMenu
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -28,7 +27,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -40,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -48,22 +47,22 @@ import java.time.format.DateTimeFormatter
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ExpenseTrackerScreen(
+    navController: NavController,
     onAddExpenseClick: () -> Unit,
     expenseRecords: List<ExpenseRecord>,
     onViewRecordsClick: () -> Unit,
     onSetBudgetClick: () -> Unit,
     onViewDebtsClick: () -> Unit,
     onViewAnalysisClick: () -> Unit,
-    onViewFilterClick: ()->Unit
+    onViewFilterClick: () -> Unit
 ) {
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
-    var selectedBottomTabIndex by remember { mutableIntStateOf(0) }
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    var selectedBottomTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("Daily", "Monthly", "Calendar", "Notes")
     var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
     val formatter = DateTimeFormatter.ofPattern("MMM yyyy")
 
     // Drawer state
-    var isDrawerOpen by remember { mutableStateOf(false) }
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val coroutineScope = rememberCoroutineScope()
 
@@ -81,9 +80,9 @@ fun ExpenseTrackerScreen(
             Column(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .fillMaxWidth(0.75f) // 3/4 of the screen width
-                    .background(Color.LightGray) // Light shade background
-                    .padding(16.dp) // Padding for content
+                    .fillMaxWidth(0.75f)
+                    .background(Color.LightGray)
+                    .padding(16.dp)
             ) {
                 SettingsMenu(
                     onSettingsClick = { /* Handle Settings Click */ },
@@ -92,23 +91,17 @@ fun ExpenseTrackerScreen(
                     onAddNewCategoriesClick = { /* Handle Add New Categories Click */ }
                 )
             }
-        },
-        gesturesEnabled = true
+        }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 TopAppBar(
                     title = {
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            // Menu button
                             IconButton(onClick = {
                                 coroutineScope.launch {
-                                    if (drawerState.isOpen) {
-                                        drawerState.close()
-                                    }
-                                    else {
-                                        drawerState.open()
-                                    }
+                                    if (drawerState.isOpen) drawerState.close()
+                                    else drawerState.open()
                                 }
                             }) {
                                 Icon(
@@ -127,60 +120,67 @@ fun ExpenseTrackerScreen(
                             }
                         }
                     },
-                    actions = {
-                        // Add any other actions here
-                    }
+                    actions = { /* Other actions can be added here */ }
                 )
 
-                Header(currentYearMonth, onPrevClick = {
-                    currentYearMonth = currentYearMonth.minusMonths(1)
-                }) {
-                    currentYearMonth = currentYearMonth.plusMonths(1)
-                }
+                // Header with the current month
+                Header(
+                    currentYearMonth,
+                    onPrevClick = { currentYearMonth = currentYearMonth.minusMonths(1) },
+                    onNextClick = { currentYearMonth = currentYearMonth.plusMonths(1) }
+                )
+
+                // Tab layout
                 TabLayout(tabs, selectedTabIndex) { index ->
                     selectedTabIndex = index
                 }
+
+                // Income and expense overview
                 CurrentMonthCard(currentMonthIncome, currentMonthExpense)
+
+                // Action buttons
                 Column(
                     modifier = Modifier
                         .padding(16.dp)
                         .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp) // Space between buttons
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Button(
                         onClick = onSetBudgetClick,
                         modifier = Modifier
                             .fillMaxWidth(0.45f)
-                            .height(56.dp) // Increased height
+                            .height(56.dp)
                     ) {
-                        Text(text = "Set Budget", fontSize = 18.sp) // Increased text size
+                        Text(text = "Set Budget", fontSize = 18.sp)
                     }
                     Button(
                         onClick = onViewRecordsClick,
                         modifier = Modifier
                             .fillMaxWidth(0.45f)
-                            .height(56.dp) // Increased height
+                            .height(56.dp)
                     ) {
-                        Text(text = "View Records", fontSize = 18.sp) // Increased text size
+                        Text(text = "View Records", fontSize = 18.sp)
                     }
                     Button(
                         onClick = onViewDebtsClick,
                         modifier = Modifier
                             .fillMaxWidth(0.45f)
-                            .height(56.dp) // Increased height
+                            .height(56.dp)
                     ) {
-                        Text(text = "View Debts", fontSize = 18.sp) // Increased text size
+                        Text(text = "View Debts", fontSize = 18.sp)
                     }
                     Button(
                         onClick = onViewAnalysisClick,
                         modifier = Modifier
                             .fillMaxWidth(0.45f)
-                            .height(56.dp) // Increased height
+                            .height(56.dp)
                     ) {
-                        Text(text = "View Analysis", fontSize = 18.sp) // Increased text size
+                        Text(text = "View Analysis", fontSize = 18.sp)
                     }
                 }
+
+                // Floating action button
                 Box(
                     contentAlignment = Alignment.BottomEnd,
                     modifier = Modifier
@@ -190,7 +190,7 @@ fun ExpenseTrackerScreen(
                     IconButton(
                         onClick = onAddExpenseClick,
                         modifier = Modifier
-                            .size(64.dp) // Increased size
+                            .size(64.dp)
                             .shadow(8.dp, CircleShape)
                             .background(Color(0xFFC37A5C), CircleShape)
                     ) {
@@ -202,12 +202,19 @@ fun ExpenseTrackerScreen(
                         )
                     }
                 }
+
+                // Bottom navigation bar
                 BottomNavBar(
                     selectedTabIndex = selectedBottomTabIndex,
                     onTabSelected = { index ->
                         selectedBottomTabIndex = index
-                        // Handle navigation here if needed
-                    },
+                        when (index) {
+                            0 -> navController.navigate("expenseTracker") // Navigate to Expense Tracker screen
+                            1 -> navController.navigate("viewRecords")
+                            2 -> navController.navigate("analysis")
+                            3 -> navController.navigate("setBudget")
+                        }
+                    }
                 )
             }
         }

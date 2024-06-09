@@ -54,7 +54,7 @@ fun ViewRecordsScreen(expenseRecords: List<ExpenseRecord>, onBack: () -> Unit) {
         .padding(16.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.Center
         ) {
             TextButton(onClick = onBack) {
                 Text(text = "Back", fontSize = 16.sp)

@@ -1,7 +1,6 @@
 package com.firstapp.expense_tracker
 import BudgetedCategoriesScreen
 import BudgetedCategory
-import DebtsScreen
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,26 +10,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.example.myapp.ui.screens.MyApp
+import com.example.financemanagementapp.DebtsScreen
+import com.example.financemanagementapp.SearchExpenseScreen
 import com.firstapp.expense_tracker.ui.theme.Expense_TrackerTheme
 
 class MainActivity : ComponentActivity() {
-    private val expenseRecords = mutableListOf<ExpenseRecord>()
+    private var expenseRecords = mutableListOf<ExpenseRecord>()
     private val budgetedCategories = mutableListOf<BudgetedCategory>()
-
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             Expense_TrackerTheme {
                 var showAddExpenseScreen by remember { mutableStateOf(false) }
+                var showFilterScreen by remember { mutableStateOf(false) }
                 var showViewRecordsScreen by remember { mutableStateOf(false) }
                 var showSetBudgetScreen by remember { mutableStateOf(false) }
                 var showBudgetedCategoriesScreen by remember { mutableStateOf(false) }
                 var showDebtsScreen by remember { mutableStateOf(false) }
                 var showAnalysisScreen by remember { mutableStateOf(false) }
                // val navController = rememberNavController()
-
+                expenseRecords = expenseRecords.filter { record ->
+                    record.accountType.isNotEmpty() && record.category.isNotEmpty()
+                }.toMutableList()
                 when {
                     showSetBudgetScreen -> {
                         SetBudgetCard(
@@ -75,6 +77,9 @@ class MainActivity : ComponentActivity() {
                         MyApp(onBack = {showAnalysisScreen=false},
                             expenseRecords=expenseRecords)
                     }
+                    showFilterScreen->{
+                        SearchExpenseScreen(expenseRecords = expenseRecords,onBack={showFilterScreen=false})
+                    }
                     else -> {
                         ExpenseTrackerScreen(
                             onAddExpenseClick = { showAddExpenseScreen = true },
@@ -83,6 +88,7 @@ class MainActivity : ComponentActivity() {
                             onSetBudgetClick = { showSetBudgetScreen = true },
                             onViewDebtsClick = { showDebtsScreen = true }, // Ensure this is correct
                             onViewAnalysisClick = {showAnalysisScreen=true},
+                            onViewFilterClick = {showFilterScreen=true},
                         )
                     }
                 }

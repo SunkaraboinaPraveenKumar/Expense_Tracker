@@ -1,7 +1,10 @@
+package com.example.financemanagementapp
 
-
+import CreditForm
+import DebtForm
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,21 +19,24 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.firstapp.expense_tracker.Credit
@@ -54,22 +60,34 @@ fun DebtsScreen(onBack:()->Unit) {
         }
     } else {
         Column(modifier = Modifier.fillMaxSize()) {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text(text = "Debts/Credits") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            painter = painterResource(id = android.R.drawable.ic_media_previous),
+                            painter = painterResource(id = com.google.android.material.R.drawable.ic_arrow_back_black_24),
                             contentDescription = "Back",
                             tint = Color.White
                         )
                     }
                 },
-//                backgroundColor = Color.Blue
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = Color.Blue,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
             )
-            Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+            ) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    TextButton(onClick = { setShowTransactionScreen(true) }) {
+                    TextButton(
+                        onClick = { setShowTransactionScreen(true) },
+                        colors = ButtonDefaults.textButtonColors(
+                            containerColor = Color.LightGray
+                        )
+                    ) {
                         Text(text = "Transaction History", fontSize = 16.sp)
                     }
                     Row {
@@ -148,12 +166,49 @@ fun TabButton(text: String, selected: Boolean, onClick: () -> Unit) {
 
 @Composable
 fun TransactionScreen(transactions: List<Transaction>, onBack: () -> Unit) {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        TextButton(onClick = onBack) {
-            Text(text = "Back to Debt/Credit Screen")
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)) {
+        TextButton(
+            onClick = onBack,
+            colors = ButtonDefaults.textButtonColors(
+                containerColor = Color.LightGray
+            )
+        ) {
+            Text(text = "Back to Debt/Credit")
         }
         Spacer(modifier = Modifier.height(16.dp))
-        TransactionHistoryScreen(transactions = transactions)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .border(2.dp, Color.Gray, RoundedCornerShape(8.dp))
+                .background(Color.White, RoundedCornerShape(8.dp))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (transactions.isEmpty()) {
+                Text(
+                    text = "No transaction history",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(16.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onBack,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Blue,
+                        contentColor = Color.White
+                    ),
+                ) {
+                    Text(text = "Go Back")
+                }
+            } else {
+                TransactionHistoryScreen(transactions = transactions)
+            }
+        }
     }
 }
 
@@ -170,20 +225,45 @@ fun TransactionHistoryScreen(transactions: List<Transaction>) {
 @Composable
 fun TransactionRow(transaction: Transaction) {
     val borderColor = if (transaction.isDebt) Color.Red else Color.Green
+    val backgroundColor = if (transaction.isDebt) Color(0xFFFFEBEE) else Color(0xFFE8F5E9)
+    val textColor = if (transaction.isDebt) Color(0xFFD32F2F) else Color(0xFF388E3C)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .border(1.dp, borderColor, RoundedCornerShape(8.dp))
+            .background(backgroundColor, RoundedCornerShape(8.dp))
             .padding(16.dp)
     ) {
-        Text("Amount: ${transaction.amount}", color = borderColor)
+        Text(
+            text = "Amount: ${transaction.amount}",
+            color = textColor,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
         if (transaction.isDebt) {
-            Text("To: ${transaction.toOrFrom}", color = borderColor)
+            Text(
+                text = "To: ${transaction.toOrFrom}",
+                color = textColor,
+                fontSize = 16.sp
+            )
         } else {
-            Text("From: ${transaction.toOrFrom}", color = borderColor)
+            Text(
+                text = "From: ${transaction.toOrFrom}",
+                color = textColor,
+                fontSize = 16.sp
+            )
         }
-        Text("Description: ${transaction.description}", color = borderColor)
-        Text("Date of Repayment: ${transaction.dateOfRepayment}", color = borderColor)
+        Text(
+            text = "Description: ${transaction.description}",
+            color = textColor,
+            fontSize = 16.sp
+        )
+        Text(
+            text = "Date of Repayment: ${transaction.dateOfRepayment}",
+            color = textColor,
+            fontSize = 16.sp
+        )
     }
 }
 

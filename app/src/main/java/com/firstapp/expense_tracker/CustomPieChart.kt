@@ -1,4 +1,4 @@
-package com.example.myapp.ui.components
+package com.firstapp.expense_tracker
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -13,6 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -23,24 +28,69 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
+
 @Composable
 fun CustomPieChart(
     data: List<Pair<String, Float>>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    analysisType: String,
+    onBack:()->Unit
 ) {
     val totalValue = data.sumOf { it.second }
     val startAngle = -90f
     val colors = listOf(
-        Color.Blue,
-        Color.Green,
-        Color.Red,
-        Color.Yellow,
-        Color.Magenta,
-        Color.Cyan
+        // Primary Colors
+        Color(0xFF4169E1), // Royal Blue
+        Color(0xFF228B22), // Forest Green
+        Color(0xFFFF6347), // Tomato Red
+        Color(0xFF00BFFF), // Deep Sky Blue
+        Color(0xFFDAA520), // Goldenrod
+
+        // Accent Colors
+        Color(0xFFBF00FF), // Electric Purple
+        Color(0xFF00FFFF), // Aqua
+        Color(0xFFFF7F50), // Coral
+        Color(0xFF00FF7F), // Spring Green
+        Color(0xFF40E0D0), // Turquoise
+
+        // Neutrals
+        Color(0xFF696969), // Dim Gray
+        Color(0xFF708090), // Slate Gray
+        Color(0xFF778899), // Light Slate Gray
+        Color(0xFFE6E6FA), // Lavender
+
+        // Pastel Colors
+        Color(0xFFFFD1DC), // Pastel Pink
+        Color(0xFFAEC6CF), // Pastel Blue
+        Color(0xFF77DD77), // Pastel Green
+        Color(0xFFFDFD96), // Pastel Yellow
+        Color(0xFFFFB347), // Pastel Orange
+
+        // Vibrant Colors
+        Color(0xFFFF00FF), // Magenta
+        Color(0xFF00FF00), // Lime
+        Color(0xFF00FFFF), // Cyan
+        Color(0xFFFF4500), // Orange Red
+        Color(0xFF7FFF00)  // Chartreuse
     )
+
+
     val colorMap = remember { data.mapIndexed { index, pair -> pair.first to colors[index % colors.size] }.toMap() }
 
     Column(modifier = modifier) {
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                tint = Color.Black
+            )
+        }
+        Text(
+            text = "$analysisType Analysis",
+            style = MaterialTheme.typography.displayMedium,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            color = Color(0xFF008080)
+        )
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -88,7 +138,7 @@ fun CustomPieChart(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "$label: ${"%.1f".format((value / totalValue) * 100)}%",
-                        color = Color.White
+                        color = Color.Black
                     )
                 }
             }

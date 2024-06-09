@@ -45,7 +45,9 @@ fun ViewRecordsScreen(expenseRecords: List<ExpenseRecord>, onBack: () -> Unit) {
     }.sumOf { it.amount }
 
     // Sort the expense records by dateTime in descending order
-    val sortedExpenseRecords = expenseRecords.sortedByDescending { it.dateTime }
+    val sortedExpenseRecords = expenseRecords.filter { record ->
+        record.accountType.isNotEmpty() && record.category.isNotEmpty()
+    }.sortedByDescending { it.dateTime }
 
     Column(modifier = Modifier
         .fillMaxSize()
@@ -77,7 +79,7 @@ fun ViewRecordsScreen(expenseRecords: List<ExpenseRecord>, onBack: () -> Unit) {
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ExpenseRecordItem(record: ExpenseRecord) {
-    val color = if (record.isIncome) Color.Green else Color.Red
+    val color = if (record.isIncome) Color(0xFF4CAF50) else Color.Red
     val sign = if (record.isIncome) "+" else "-"
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 

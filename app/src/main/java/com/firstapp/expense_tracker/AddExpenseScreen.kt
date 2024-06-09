@@ -193,7 +193,8 @@ fun AddExpenseScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
-            textStyle = LocalTextStyle.current.copy(color = Color.Black)
+            textStyle = LocalTextStyle.current.copy(color = Color.Black),
+            singleLine = true
         )
         Text(
             text = "Date & Time: ${dateTime.format(formatter)}",

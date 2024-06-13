@@ -18,62 +18,77 @@ fun FinanceManagementApp() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "expenseTracker") {
         composable("expenseTracker") {
-            ExpenseTrackerScreen(
-                navController = navController,
-                onAddExpenseClick = { navController.navigate("addExpense") },
-                expenseRecords = expenseRecords,
-                onViewRecordsClick = { navController.navigate("viewRecords") },
-                onSetBudgetClick = { navController.navigate("setBudget") },
-                onViewDebtsClick = { navController.navigate("debts") },
-                onViewAnalysisClick = { navController.navigate("analysis") },
-                onViewFilterClick = { navController.navigate("filter") } // Navigate to filter screen
-            )
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+                ExpenseTrackerScreen(
+                    navController = navController,
+                    onAddExpenseClick = { navController.navigate("addExpense") },
+                    expenseRecords = expenseRecords,
+                    onViewRecordsClick = { navController.navigate("viewRecords") },
+                    onSetBudgetClick = { navController.navigate("setBudget") },
+                    onViewDebtsClick = { navController.navigate("debts") },
+                    onViewAnalysisClick = { navController.navigate("analysis") }
+                )
+            }
         }
         composable("viewRecords") {
-            ViewRecordsScreen(
-                expenseRecords = expenseRecords,
-                onBack = { navController.popBackStack() }
-            )
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+                ViewRecordsScreen(
+                    expenseRecords = expenseRecords,
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
         composable("setBudget") {
-            SetBudgetCard(
-                onClose = { navController.popBackStack() },
-                onBackHome = { navController.popBackStack() },
-                onAddBudgetCategory = { budgetedCategory ->
-                    budgetedCategories.add(budgetedCategory)
-                },
-                onViewBudgetedCategoriesClick = {
-                    navController.navigate("budgetedCategories")
-                }
-            )
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+                SetBudgetCard(
+                    onClose = { navController.popBackStack() },
+                    onBackHome = { navController.popBackStack() },
+                    onAddBudgetCategory = { budgetedCategory ->
+                        budgetedCategories.add(budgetedCategory)
+                    },
+                    onViewBudgetedCategoriesClick = {
+                        navController.navigate("budgetedCategories")
+                    }
+                )
+            }
         }
         composable("budgetedCategories") {
-            BudgetedCategoriesScreen(
-                budgetedCategories = budgetedCategories,
-                expenseRecordsBudgeted = expenseRecords
-            ) {
-                navController.popBackStack()
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+                BudgetedCategoriesScreen(
+                    budgetedCategories = budgetedCategories,
+                    expenseRecordsBudgeted = expenseRecords
+                ) {
+                    navController.popBackStack()
+                }
             }
         }
         composable("addExpense") {
-            AddExpenseScreen(
-                onCancel = { navController.popBackStack() }
-            ) { record ->
-                expenseRecords.add(record)
-                navController.popBackStack()
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+                AddExpenseScreen(
+                    onCancel = { navController.popBackStack() }
+                ) { record ->
+                    expenseRecords.add(record)
+                    navController.popBackStack()
+                }
             }
         }
         composable("debts") {
-            DebtsScreen(onBack = { navController.popBackStack() })
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+                DebtsScreen(onBack = { navController.popBackStack() })
+            }
         }
         composable("analysis") {
-            MyApp(onBack = { navController.popBackStack() }, expenseRecords = expenseRecords)
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+                MyApp(onBack = { navController.popBackStack() }, expenseRecords = expenseRecords)
+            }
         }
         composable("filter") {
-            SearchExpenseScreen(
-                onBack = { navController.popBackStack() },
-                expenseRecords = expenseRecords
-            )
+            MainLayout(navController = navController, onViewFilterClick = { navController.navigate("filter") }) {
+                SearchExpenseScreen(
+                    onBack = { navController.popBackStack() },
+                    expenseRecords = expenseRecords
+                )
+            }
         }
     }
 }

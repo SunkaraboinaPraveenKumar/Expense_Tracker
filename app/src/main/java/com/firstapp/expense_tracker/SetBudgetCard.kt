@@ -22,7 +22,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,7 +40,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import java.time.LocalDateTime
 import java.time.YearMonth
-import androidx.compose.material3.Icon as ComposeIcon
 // Sample list of categories
 val categories = listOf(
     "Baby", "Beauty", "Bills", "Car", "Clothing", "Education",
@@ -87,16 +85,10 @@ fun SetBudgetCard(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        IconButton(onClick = onBackHome) {
-            ComposeIcon(
-                painter = painterResource(id = R.drawable.ic_chevron_left),
-                contentDescription = "Back"
-            )
-        }
         Button(
             onClick = onViewBudgetedCategoriesClick,
             modifier = Modifier
-                .align(Alignment.End)
+                .align(Alignment.CenterHorizontally)
                 .padding(end = 16.dp, top = 16.dp)
         ) {
             Text(text = "View Budgeted Categories")

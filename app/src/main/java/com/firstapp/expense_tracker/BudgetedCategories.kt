@@ -1,3 +1,4 @@
+
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
@@ -18,8 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -89,13 +88,6 @@ fun BudgetedCategoriesScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-        // Back button
-        IconButton(onClick = onBack) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_chevron_left),
-                contentDescription = "Back"
-            )
-        }
 
         // Header with month navigation
         Header(currentYearMonth, onPrevClick = {

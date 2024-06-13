@@ -13,10 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -78,13 +74,6 @@ fun CustomPieChart(
     val colorMap = remember { data.mapIndexed { index, pair -> pair.first to colors[index % colors.size] }.toMap() }
 
     Column(modifier = modifier) {
-        IconButton(onClick = onBack) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "Back",
-                tint = Color.Black
-            )
-        }
         Text(
             text = "$analysisType Analysis",
             style = MaterialTheme.typography.displayMedium,

@@ -1,5 +1,4 @@
 package com.firstapp.expense_tracker
-
 import BudgetedCategory
 import android.os.Build
 import androidx.annotation.RequiresApi
@@ -29,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,14 +40,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import java.time.LocalDateTime
 import java.time.YearMonth
+
 // Sample list of categories
 val categories = listOf(
     "Baby", "Beauty", "Bills", "Car", "Clothing", "Education",
     "Electronics", "Entertainment", "Food", "Health", "Home",
     "Insurance", "Shopping", "Social", "Sport", "Transportation"
 )
-
-// Added import for Icon from androidx.compose.material3
 
 val expenseList: List<Icon> = listOf(
     Icon("Baby", R.drawable.milk_bottle),
@@ -73,12 +72,19 @@ val expenseList: List<Icon> = listOf(
 fun SetBudgetCard(
     onClose: () -> Unit,
     onBackHome: () -> Unit,
+    budgetedCategories: List<BudgetedCategory>,
     onAddBudgetCategory: (BudgetedCategory) -> Unit,
     onViewBudgetedCategoriesClick: () -> Unit
 ) {
-    var selectedMonthYear by remember { mutableStateOf(YearMonth.now()) }
-    var isDialogVisible by remember { mutableStateOf(false) }
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var selectedMonthYear by rememberSaveable { mutableStateOf(YearMonth.now()) }
+    var isDialogVisible by rememberSaveable { mutableStateOf(false) }
+    var selectedCategory by rememberSaveable { mutableStateOf<String?>(null) }
+
+    // Filter out categories that are already budgeted for the selected month
+    val budgetedCategoriesForMonth = budgetedCategories.filter { it.monthYear == selectedMonthYear }
+    val availableCategories = categories.filter { category ->
+        budgetedCategoriesForMonth.none { it.category == category }
+    }
 
     Column(
         modifier = Modifier
@@ -113,13 +119,17 @@ fun SetBudgetCard(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
-            items(categories) { category ->
+
+            items(availableCategories) { category ->
                 val iconImage = expenseList.find { it.name == category }
-                BudgetCategoryRow(category = category,
+                BudgetCategoryRow(
+                    category = category,
                     onSetBudgetClick = {
                         selectedCategory = category
                         isDialogVisible = true
-                    },icon = iconImage?.resourceId ?: R.drawable.ic_category)
+                    },
+                    icon = iconImage?.resourceId ?: R.drawable.ic_category
+                )
             }
             item {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -146,6 +156,7 @@ fun SetBudgetCard(
         )
     }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

@@ -36,7 +36,10 @@ import com.firstapp.expense_tracker.ExpenseRecordItem
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun SearchExpenseScreen(expenseRecords: MutableList<ExpenseRecord>, onBack: () -> Unit) {
+fun SearchExpenseScreen(expenseRecords: MutableList<ExpenseRecord>,
+                        onBack: () -> Unit,
+                        onEdit: (ExpenseRecord) -> Unit,
+                        onDelete: (ExpenseRecord) -> Unit,) {
     var searchText by remember { mutableStateOf("") }
 
     val filteredExpenses = remember(searchText) {
@@ -102,7 +105,11 @@ fun SearchExpenseScreen(expenseRecords: MutableList<ExpenseRecord>, onBack: () -
             )
             {
                 items(filteredExpenses) { record ->
-                    ExpenseRecordItem(record)
+                    ExpenseRecordItem(
+                        record = record,
+                        onEdit = onEdit,
+                        onDelete = onDelete
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }

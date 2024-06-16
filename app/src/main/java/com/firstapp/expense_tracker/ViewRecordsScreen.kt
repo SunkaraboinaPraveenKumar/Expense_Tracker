@@ -1,5 +1,4 @@
 package com.firstapp.expense_tracker
-
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
@@ -14,10 +13,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,33 +38,55 @@ import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ViewRecordsScreen(expenseRecords: List<ExpenseRecord>, onBack: () -> Unit) {
-    // Get the current year and month
-    val currentYearMonth = YearMonth.now()
+fun ViewRecordsScreen(
+    expenseRecords: List<ExpenseRecord>,
+    onEdit: (ExpenseRecord) -> Unit,
+    onDelete: (ExpenseRecord) -> Unit,
+    onBack: () -> Unit
+) {
+    var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
 
-    // Calculate the income and expense for the current month
-    val currentMonthIncome = expenseRecords.filter {
-        it.isIncome && YearMonth.from(it.dateTime) == currentYearMonth
-    }.sumOf { it.amount }
-    val currentMonthExpense = expenseRecords.filter {
-        !it.isIncome && YearMonth.from(it.dateTime) == currentYearMonth
-    }.sumOf { it.amount }
+    // Filter the records for the current month and year
+    val filteredRecords = expenseRecords.filter { record ->
+        val recordYearMonth = YearMonth.from(record.dateTime)
+        recordYearMonth == currentYearMonth
+    }
 
-    // Sort the expense records by dateTime in descending order
-    val sortedExpenseRecords = expenseRecords.filter { record ->
+    // Calculate current month income and expenses
+    val currentMonthIncome = filteredRecords.filter { it.isIncome }
+        .sumOf { it.amount }
+    val currentMonthExpense = filteredRecords.filter { !it.isIncome }
+        .sumOf { it.amount }
+
+    // Sort records by date
+    val sortedExpenseRecords = filteredRecords.filter { record ->
         record.accountType.isNotEmpty() && record.category.isNotEmpty()
     }.sortedByDescending { it.dateTime }
 
     Column(modifier = Modifier
         .fillMaxSize()
         .padding(16.dp)) {
+
+        // Header with chevron navigation
+        Header(
+            currentYearMonth,
+            onPrevClick = { currentYearMonth = currentYearMonth.minusMonths(1) },
+            onNextClick = { currentYearMonth = currentYearMonth.plusMonths(1) }
+        )
+
+        // Display income and expense for the current month
         CurrentMonthCard(currentMonthIncome, currentMonthExpense)
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // List of expense records
         LazyColumn {
             items(sortedExpenseRecords) { record ->
-                ExpenseRecordItem(record)
+                ExpenseRecordItem(
+                    record = record,
+                    onEdit = onEdit,
+                    onDelete = onDelete
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
@@ -65,11 +95,14 @@ fun ViewRecordsScreen(expenseRecords: List<ExpenseRecord>, onBack: () -> Unit) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ExpenseRecordItem(record: ExpenseRecord) {
+fun ExpenseRecordItem(
+    record: ExpenseRecord,
+    onEdit: (ExpenseRecord) -> Unit,
+    onDelete: (ExpenseRecord) -> Unit
+) {
     val color = if (record.isIncome) Color(0xFF4CAF50) else Color.Red
     val sign = if (record.isIncome) "+" else "-"
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-
 
     Column(
         modifier = Modifier
@@ -77,7 +110,6 @@ fun ExpenseRecordItem(record: ExpenseRecord) {
             .padding(vertical = 16.dp, horizontal = 8.dp)
             .background(Color.LightGray, shape = MaterialTheme.shapes.small)
     ) {
-        // Date section
         Text(
             text = record.dateTime.format(formatter),
             fontSize = 14.sp,
@@ -118,6 +150,15 @@ fun ExpenseRecordItem(record: ExpenseRecord) {
                 color = color,
                 modifier = Modifier.padding(8.dp)
             )
+
+            Row(modifier = Modifier.padding(start = 8.dp)) {
+                IconButton(onClick = { onEdit(record) }) {
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit")
+                }
+                IconButton(onClick = { onDelete(record) }) {
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
+                }
+            }
         }
     }
 }

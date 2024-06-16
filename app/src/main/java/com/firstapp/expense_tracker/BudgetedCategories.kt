@@ -1,4 +1,3 @@
-
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
@@ -19,7 +18,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,8 +39,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.firstapp.expense_tracker.ExpenseRecord
 import com.firstapp.expense_tracker.Header
 import com.firstapp.expense_tracker.Icon
@@ -60,14 +71,12 @@ val expenseList: MutableList<Icon> = mutableListOf(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BudgetedCategoriesScreen(
-    budgetedCategories: List<BudgetedCategory>,
+    budgetedCategories: MutableList<BudgetedCategory>,
     expenseRecordsBudgeted: MutableList<ExpenseRecord>,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onBudgetCategoryDeleted: (BudgetedCategory) -> Unit
 ) {
-    // State for the current selected month and year
     var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
-
-    // Filtering budgeted categories for the selected month and year
     var filteredBudgetedCategories by remember {
         mutableStateOf(
             budgetedCategories.filter {
@@ -75,12 +84,22 @@ fun BudgetedCategoriesScreen(
             }
         )
     }
+    var editingCategory by remember { mutableStateOf<BudgetedCategory?>(null) }
 
-    // Function to update the filtered budgeted categories
     fun updateFilteredCategories(yearMonth: YearMonth) {
         filteredBudgetedCategories = budgetedCategories.filter {
             YearMonth.from(it.monthYear) == yearMonth
         }
+    }
+
+    fun handleEdit(budgetedCategory: BudgetedCategory) {
+        editingCategory = budgetedCategory
+    }
+
+    fun handleDelete(budgetedCategory: BudgetedCategory) {
+        budgetedCategories.removeIf { it.dateTime == budgetedCategory.dateTime }
+        updateFilteredCategories(currentYearMonth)
+        onBudgetCategoryDeleted(budgetedCategory)
     }
 
     Column(
@@ -88,8 +107,6 @@ fun BudgetedCategoriesScreen(
             .fillMaxSize()
             .background(Color.White)
     ) {
-
-        // Header with month navigation
         Header(currentYearMonth, onPrevClick = {
             currentYearMonth = currentYearMonth.minusMonths(1)
             updateFilteredCategories(currentYearMonth)
@@ -99,7 +116,6 @@ fun BudgetedCategoriesScreen(
         })
 
         if (filteredBudgetedCategories.isEmpty()) {
-            // Empty state UI
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -114,12 +130,11 @@ fun BudgetedCategoriesScreen(
                     color = Color.Gray
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                androidx.compose.material3.Button(onClick = onBack) {
+                Button(onClick = onBack) {
                     Text(text = "Go Back")
                 }
             }
         } else {
-            // Non-empty state: show list
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -139,72 +154,221 @@ fun BudgetedCategoriesScreen(
                             spent = totalSpent,
                             remaining = budgetedCategory.limit - totalSpent
                         ),
-                        isOverLimit
+                        isOverLimit,
+                        onEditClick = { handleEdit(it) },
+                        onDeleteClick = { handleDelete(it) }
                     )
+                }
+            }
+        }
+
+        if (editingCategory != null) {
+            EditBudgetedCategoryDialog(
+                budgetedCategory = editingCategory!!,
+                onDismiss = { editingCategory = null },
+                onSave = { updatedCategory ->
+                    budgetedCategories.replaceAll {
+                        if (it.dateTime == updatedCategory.dateTime) updatedCategory else it
+                    }
+                    updateFilteredCategories(currentYearMonth)
+                    editingCategory = null
+                }
+            )
+        }
+    }
+}
+
+
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun BudgetedCategoryRow(
+    budgetedCategory: BudgetedCategory,
+    isOverLimit: Boolean,
+    onEditClick: (BudgetedCategory) -> Unit,
+    onDeleteClick: (BudgetedCategory) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .padding(vertical = 8.dp, horizontal = 16.dp)
+            .fillMaxWidth()
+            .border(1.dp, if (isOverLimit) Color.Red else Color.Gray, RoundedCornerShape(8.dp))
+            .padding(8.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Category Icon
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(Color.Gray, CircleShape)
+            ) {
+                val icon = expenseList.find { it.name == budgetedCategory.category }
+                if (icon != null) {
+                    Image(
+                        painter = painterResource(id = icon.resourceId),
+                        contentDescription = "Category Icon",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = budgetedCategory.category,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+                Text(
+                    text = "Month: ${budgetedCategory.monthYear.monthValue}, Year: ${budgetedCategory.monthYear.year}",
+                    fontSize = 14.sp,
+                    color = Color.Black
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = "Limit: ${budgetedCategory.limit}",
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = "Spent: ${budgetedCategory.spent}",
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
+                Text(
+                    text = "Remaining: ${budgetedCategory.remaining}",
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
+            }
+
+            Column {
+                IconButton(
+                    onClick = { onEditClick(budgetedCategory) },
+                    modifier = Modifier
+                        .padding(5.dp)
+                        .background(
+                            if (isOverLimit) Color.Yellow else Color.Transparent,
+                            shape = CircleShape
+                        ) // Highlight edit button only if over limit
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit",
+                        tint = if (isOverLimit) Color.Black else Color.Gray // Change icon color based on over limit
+                    )
+                }
+                IconButton(
+                    onClick = { onDeleteClick(budgetedCategory) },
+                    modifier = Modifier.padding(5.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete")
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Progress bar for budget
+        val progress = (budgetedCategory.spent / budgetedCategory.limit).toFloat().coerceIn(0f, 1f)
+        val progressBarColor = if (isOverLimit) Color.Red else Color.Green
+        LinearProgressIndicator(
+            progress = progress,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .border(1.dp, if (isOverLimit) Color.Red else Color.Green, shape = RoundedCornerShape(4.dp))
+                .padding(horizontal = 4.dp),
+            color = progressBarColor,
+            trackColor = Color.LightGray
+        )
+    }
+}
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun EditBudgetedCategoryDialog(
+    budgetedCategory: BudgetedCategory,
+    onDismiss: () -> Unit,
+    onSave: (BudgetedCategory) -> Unit
+) {
+    var category by remember { mutableStateOf(budgetedCategory.category) }
+    var limit by remember { mutableStateOf(budgetedCategory.limit.toString()) }
+
+    val iconImage = expenseList.find { it.name == budgetedCategory.category }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .background(Color.White)
+                .padding(16.dp)
+                .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+                .padding(16.dp)
+        ) {
+            Text(
+                text = "Edit Budgeted Category",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .background(Color.Gray, CircleShape)
+                ) {
+                    Image(
+                        painter = painterResource(id = iconImage?.resourceId ?: R.drawable.ic_category),
+                        contentDescription = "Category Icon",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = category,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            }
+            OutlinedTextField(
+                value = limit,
+                onValueChange = { limit = it },
+                label = { Text(text = "Budget Limit") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(text = "Cancel")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = {
+                    val limitValue = limit.toDoubleOrNull()
+                    if (limitValue != null) {
+                        onSave(
+                            budgetedCategory.copy(
+                                category = category,
+                                limit = limitValue
+                            )
+                        )
+                    }
+                }) {
+                    Text(text = "Save")
                 }
             }
         }
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun BudgetedCategoryRow(budgetedCategory: BudgetedCategory, isOverLimit: Boolean) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .padding(vertical = 8.dp)
-            .fillMaxWidth()
-            .border(1.dp, if (isOverLimit) Color.Red else Color.Gray, RoundedCornerShape(8.dp))
-            .padding(8.dp)
-    ) {
-        // Category Icon
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .background(Color.Gray, CircleShape)
-        ) {
-            // Icon for the category
-            val icon = expenseList.find { it.name == budgetedCategory.category }
-            if (icon != null) {
-                Image(
-                    painter = painterResource(id = icon.resourceId),
-                    contentDescription = "Category Icon",
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-        Spacer(modifier = Modifier.width(8.dp))
-        Column {
-            Text(
-                text = budgetedCategory.category,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-            Text(
-                text = "Month: ${budgetedCategory.monthYear.monthValue}, Year: ${budgetedCategory.monthYear.year}",
-                fontSize = 14.sp,
-                color = Color.Black
-            )
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = "Limit: ${budgetedCategory.limit}",
-                fontSize = 16.sp,
-                color = Color.Black
-            )
-            Text(
-                text = "Spent: ${budgetedCategory.spent}",
-                fontSize = 16.sp,
-                color = Color.Black
-            )
-            Text(
-                text = "Remaining: ${budgetedCategory.remaining}",
-                fontSize = 16.sp,
-                color = Color.Black
-            )
-        }
-    }
-}

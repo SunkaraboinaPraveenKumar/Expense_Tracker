@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
@@ -48,15 +49,17 @@ data class Icon(val name: String, val resourceId: Int)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AddExpenseScreen(
+    initialRecord: ExpenseRecord? = null, // Add initial record parameter
     onCancel: () -> Unit,
     onSave: (ExpenseRecord) -> Unit
 ) {
-    var accountType by remember { mutableStateOf("") }
-    var category by remember { mutableStateOf("") }
-    var amount by remember { mutableStateOf("") }
-    val dateTime by remember { mutableStateOf(LocalDateTime.now()) }
-    var isIncome by remember { mutableStateOf(false) }
-    var notes by remember { mutableStateOf("") }
+    // Use initial record data if available
+    var accountType by remember { mutableStateOf(initialRecord?.accountType ?: "") }
+    var category by remember { mutableStateOf(initialRecord?.category ?: "") }
+    var amount by remember { mutableStateOf(initialRecord?.amount?.toString() ?: "") }
+    val dateTime by remember { mutableStateOf(initialRecord?.dateTime ?: LocalDateTime.now()) }
+    var isIncome by remember { mutableStateOf(initialRecord?.isIncome ?: false) }
+    var notes by remember { mutableStateOf(initialRecord?.notes ?: "") }
     var errorMessage by remember { mutableStateOf("") }
 
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
@@ -73,6 +76,8 @@ fun AddExpenseScreen(
     val accountTypes = listOf("Card", "Cash", "Savings")
 
     val textColor = if (isSystemInDarkTheme()) Color.White else Color.Black
+    val selectedColor = if (isSystemInDarkTheme()) Color(0xFFADD8E6) else Color(0xFFFFA500) // Adapt color for dark mode
+
     val accountList = listOf(
         Icon("Card", R.drawable.credit_card),
         Icon("Cash", R.drawable.money),
@@ -116,9 +121,12 @@ fun AddExpenseScreen(
         return true
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Top Buttons: Cancel and Save
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -151,7 +159,11 @@ fun AddExpenseScreen(
             }
         }
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        // Tabs: Income and Expense
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
             TextButton(
                 onClick = {
                     isIncome = true
@@ -162,7 +174,17 @@ fun AddExpenseScreen(
                     contentColor = if (isIncome) MaterialTheme.colorScheme.primary else textColor
                 )
             ) {
-                Text(text = "Income", fontSize = 18.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "Income", fontSize = 18.sp)
+                    if (isIncome) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Selected",
+                            modifier = Modifier.size(18.dp),
+                            tint = selectedColor
+                        )
+                    }
+                }
             }
             TextButton(
                 onClick = {
@@ -171,10 +193,20 @@ fun AddExpenseScreen(
                     category = ""
                 },
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = if (!isIncome) MaterialTheme.colorScheme.primary else textColor
+                    contentColor = if (!isIncome) selectedColor else textColor
                 )
             ) {
-                Text(text = "Expense", fontSize = 18.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "Expense", fontSize = 18.sp)
+                    if (!isIncome) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = "Selected",
+                            modifier = Modifier.size(18.dp),
+                            tint = selectedColor
+                        )
+                    }
+                }
             }
         }
 
@@ -185,22 +217,43 @@ fun AddExpenseScreen(
             modifier = Modifier.padding(16.dp)
         )
 
-        DropdownMenuField(
-            options = accountTypes,
-            selectedOption = accountType,
-            onOptionSelected = { accountType = it },
-            label = "Account Type",
-            passList = accountList
+        // Fields: Account Type and Category
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            DropdownMenuField(
+                options = accountTypes,
+                selectedOption = accountType,
+                onOptionSelected = { accountType = it },
+                label = "Account Type",
+                passList = accountList,
+                modifier = Modifier.weight(1f).padding(end = 8.dp)
+            )
+
+            DropdownMenuField(
+                options = if (isIncome) incomeCategories else expenseCategories,
+                selectedOption = category,
+                onOptionSelected = { category = it },
+                label = "Category",
+                passList = if (isIncome) incomeList else expenseList,
+                modifier = Modifier.weight(1f).padding(start = 8.dp)
+            )
+        }
+
+        // Text Field: Notes
+        TextField(
+            value = notes,
+            onValueChange = { notes = it },
+            label = { Text("Notes") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            textStyle = LocalTextStyle.current.copy(color = textColor),
+            singleLine = false
         )
 
-        DropdownMenuField(
-            options = if (isIncome) incomeCategories else expenseCategories,
-            selectedOption = category,
-            onOptionSelected = { category = it },
-            label = "Category",
-            passList = if (isIncome) incomeList else expenseList
-        )
-
+        // Text Field: Amount
         TextField(
             value = amount,
             onValueChange = { amount = it },
@@ -209,10 +262,11 @@ fun AddExpenseScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
-            textStyle = LocalTextStyle.current.copy(color = Color.Black),
+            textStyle = LocalTextStyle.current.copy(color = textColor),
             singleLine = true
         )
 
+        // Date & Time
         Text(
             text = "Date & Time: ${dateTime.format(formatter)}",
             fontSize = 16.sp,
@@ -220,7 +274,12 @@ fun AddExpenseScreen(
             color = textColor
         )
 
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+        // Calculator
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .fillMaxSize()
+        ) {
             Calculator { newAmount ->
                 amount = newAmount.toString()
             }
@@ -243,12 +302,13 @@ fun DropdownMenuField(
     selectedOption: String,
     onOptionSelected: (String) -> Unit,
     label: String,
-    passList: List<Icon>
+    passList: List<Icon>,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
     val backgroundColor = Color(0xFFADD8E6) // Light gray color
 
-    Box {
+    Box(modifier = modifier) {
         Surface(
             modifier = Modifier
                 .fillMaxWidth()

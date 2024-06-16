@@ -73,12 +73,23 @@ fun SetBudgetCard(
     onClose: () -> Unit,
     onBackHome: () -> Unit,
     budgetedCategories: List<BudgetedCategory>,
+    expenseRecordsBudgeted: List<ExpenseRecord>,
     onAddBudgetCategory: (BudgetedCategory) -> Unit,
     onViewBudgetedCategoriesClick: () -> Unit
 ) {
     var selectedMonthYear by rememberSaveable { mutableStateOf(YearMonth.now()) }
     var isDialogVisible by rememberSaveable { mutableStateOf(false) }
     var selectedCategory by rememberSaveable { mutableStateOf<String?>(null) }
+
+    // Calculate total income for the current month
+    val totalIncome = expenseRecordsBudgeted
+        .filter { it.isIncome && YearMonth.from(it.dateTime) == selectedMonthYear }
+        .sumOf { it.amount }
+
+    // Calculate existing budget for the selected month
+    val existingBudget = budgetedCategories
+        .filter { YearMonth.from(it.monthYear) == selectedMonthYear }
+        .sumOf { it.limit }
 
     // Filter out categories that are already budgeted for the selected month
     val budgetedCategoriesForMonth = budgetedCategories.filter { it.monthYear == selectedMonthYear }
@@ -140,6 +151,8 @@ fun SetBudgetCard(
     if (isDialogVisible && selectedCategory != null) {
         SetBudgetDialog(
             category = selectedCategory!!,
+            existingBudget = existingBudget,
+            totalIncome = totalIncome,
             onCloseDialog = { isDialogVisible = false },
             onSetBudget = { limit ->
                 val newBudgetedCategory = BudgetedCategory(
@@ -156,6 +169,7 @@ fun SetBudgetCard(
         )
     }
 }
+
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -203,11 +217,14 @@ fun BudgetCategoryRow(category: String, onSetBudgetClick: () -> Unit, icon: Int)
 @Composable
 fun SetBudgetDialog(
     category: String,
+    existingBudget: Double,
+    totalIncome: Double,
     onCloseDialog: () -> Unit,
     onSetBudget: (Double) -> Unit
 ) {
     var budgetLimit by remember { mutableStateOf("") }
     val iconImage = expenseList.find { it.name == category }
+    var errorMessage by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest = onCloseDialog) {
         Column(
@@ -251,8 +268,16 @@ fun SetBudgetDialog(
                 value = budgetLimit,
                 onValueChange = { budgetLimit = it },
                 label = { Text(text = "Budget Limit") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                isError = errorMessage.isNotEmpty()
             )
+            if (errorMessage.isNotEmpty()) {
+                Text(
+                    text = errorMessage,
+                    color = Color.Red,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
             Row(
                 horizontalArrangement = Arrangement.End,
@@ -265,7 +290,14 @@ fun SetBudgetDialog(
                 Button(onClick = {
                     val limit = budgetLimit.toDoubleOrNull()
                     if (limit != null) {
-                        onSetBudget(limit)
+                        val newTotalBudget = existingBudget + limit
+                        if (newTotalBudget <= totalIncome) {
+                            onSetBudget(limit)
+                        } else {
+                            errorMessage = "Income is insufficient to cover the budget."
+                        }
+                    } else {
+                        errorMessage = "Please enter a valid budget limit."
                     }
                 }) {
                     Text(text = "Set")

@@ -1,4 +1,5 @@
 package com.firstapp.expense_tracker
+
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
@@ -11,17 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,8 +29,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -46,38 +43,67 @@ fun ExpenseTrackerScreen(
     onViewDebtsClick: () -> Unit,
     onViewAnalysisClick: () -> Unit
 ) {
-    var selectedTabIndex by remember { mutableStateOf(0) }
-    var selectedBottomTabIndex by remember { mutableStateOf(0) }
-    val tabs = listOf("Daily", "Monthly", "Calendar", "Notes")
-    var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
-    val formatter = DateTimeFormatter.ofPattern("MMM yyyy")
+    var currentDate by remember { mutableStateOf(LocalDate.now()) }
+    var currentFilterOption by remember { mutableStateOf(FilterOption.MONTHLY) }
 
-    // Drawer state
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val coroutineScope = rememberCoroutineScope()
+    // Define date range based on filter option
+    val dateRange = when (currentFilterOption) {
+        FilterOption.DAILY -> currentDate to currentDate
+        FilterOption.WEEKLY -> {
+            val startOfWeek = currentDate.with(java.time.DayOfWeek.MONDAY)
+            startOfWeek to startOfWeek.plusDays(6)
+        }
+        FilterOption.MONTHLY -> {
+            val startOfMonth = currentDate.withDayOfMonth(1)
+            val endOfMonth = currentDate.withDayOfMonth(currentDate.lengthOfMonth())
+            startOfMonth to endOfMonth
+        }
+    }
 
-    // Calculate the income and expense for the current month
-    val currentMonthIncome = expenseRecords.filter {
-        it.isIncome && YearMonth.from(it.dateTime) == currentYearMonth
-    }.sumOf { it.amount }
-    val currentMonthExpense = expenseRecords.filter {
-        !it.isIncome && YearMonth.from(it.dateTime) == currentYearMonth
-    }.sumOf { it.amount }
+    // Filter records based on date range
+    val filteredIncomeRecords = expenseRecords.filter { it.isIncome && it.dateTime.toLocalDate() in dateRange.first..dateRange.second }
+    val filteredExpenseRecords = expenseRecords.filter { !it.isIncome && it.dateTime.toLocalDate() in dateRange.first..dateRange.second }
+
+    val currentIncome = filteredIncomeRecords.sumOf { it.amount }
+    val currentExpense = filteredExpenseRecords.sumOf { it.amount }
 
     Column {
-        Header(
-            currentYearMonth,
-            onPrevClick = { currentYearMonth = currentYearMonth.minusMonths(1) },
-            onNextClick = { currentYearMonth = currentYearMonth.plusMonths(1) }
+        HeaderRecord(
+            currentDate = currentDate,
+            currentFilterOption = currentFilterOption,
+            onPrevClick = {
+                currentDate = when (currentFilterOption) {
+                    FilterOption.DAILY -> currentDate.minusDays(1)
+                    FilterOption.WEEKLY -> currentDate.minusWeeks(1)
+                    FilterOption.MONTHLY -> currentDate.minusMonths(1)
+                }
+            },
+            onNextClick = {
+                currentDate = when (currentFilterOption) {
+                    FilterOption.DAILY -> currentDate.plusDays(1)
+                    FilterOption.WEEKLY -> currentDate.plusWeeks(1)
+                    FilterOption.MONTHLY -> currentDate.plusMonths(1)
+                }
+            },
+            onFilterOptionSelected = {
+                currentFilterOption = it
+            }
         )
 
         // Tab layout
+        val tabs = listOf("Daily", "Monthly", "Calendar", "Notes")
+        var selectedTabIndex by remember { mutableStateOf(0) }
         TabLayout(tabs, selectedTabIndex) { index ->
             selectedTabIndex = index
         }
 
         // Income and expense overview
-        CurrentMonthCard(currentMonthIncome, currentMonthExpense)
+        CurrentMonthCard(
+            currentFilterOption = currentFilterOption,
+            dateRange = dateRange,
+            incomeRecords = filteredIncomeRecords,
+            expenseRecords = filteredExpenseRecords
+        )
 
         // Action buttons
         Column(

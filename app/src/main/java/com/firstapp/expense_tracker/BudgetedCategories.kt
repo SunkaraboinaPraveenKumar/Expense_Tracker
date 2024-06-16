@@ -86,27 +86,48 @@ fun BudgetedCategoriesScreen(
     }
     var editingCategory by remember { mutableStateOf<BudgetedCategory?>(null) }
 
+    // Update filtered categories whenever the month changes
     fun updateFilteredCategories(yearMonth: YearMonth) {
         filteredBudgetedCategories = budgetedCategories.filter {
             YearMonth.from(it.monthYear) == yearMonth
         }
     }
 
+    // Handle editing a category
     fun handleEdit(budgetedCategory: BudgetedCategory) {
         editingCategory = budgetedCategory
     }
 
+    // Handle deleting a category
     fun handleDelete(budgetedCategory: BudgetedCategory) {
         budgetedCategories.removeIf { it.dateTime == budgetedCategory.dateTime }
         updateFilteredCategories(currentYearMonth)
         onBudgetCategoryDeleted(budgetedCategory)
     }
 
+    // Calculate the total income for the current month
+    val totalIncome = expenseRecordsBudgeted
+        .filter { it.isIncome && YearMonth.from(it.dateTime) == currentYearMonth }
+        .sumOf { it.amount }
+
+    // Calculate the total budgeted amount and the total spent amount for the progress bar
+    val totalBudgeted = filteredBudgetedCategories.sumOf { it.limit }
+    val totalSpent = filteredBudgetedCategories.sumOf { budgetedCategory ->
+        expenseRecordsBudgeted
+            .filter {
+                it.category == budgetedCategory.category &&
+                        YearMonth.from(it.date) == YearMonth.from(budgetedCategory.monthYear)
+            }
+            .sumOf { it.amount }
+    }
+    val budgetUtilization = if (totalBudgeted > 0) (totalSpent / totalBudgeted).toFloat() else 0f
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
     ) {
+        // Header to navigate between months
         Header(currentYearMonth, onPrevClick = {
             currentYearMonth = currentYearMonth.minusMonths(1)
             updateFilteredCategories(currentYearMonth)
@@ -115,51 +136,26 @@ fun BudgetedCategoriesScreen(
             updateFilteredCategories(currentYearMonth)
         })
 
-        if (filteredBudgetedCategories.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "No Budgeted Categories Available",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Gray
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = onBack) {
-                    Text(text = "Go Back")
-                }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                items(filteredBudgetedCategories) { budgetedCategory ->
-                    val totalSpent = expenseRecordsBudgeted
-                        .filter {
-                            it.category == budgetedCategory.category &&
-                                    YearMonth.from(it.date) == YearMonth.from(budgetedCategory.monthYear)
-                        }
-                        .sumOf { it.amount }
+        // Card showing total income
+        IncomeCard(totalIncome = totalIncome)
 
-                    val isOverLimit = totalSpent > budgetedCategory.limit
-                    BudgetedCategoryRow(
-                        budgetedCategory.copy(
-                            spent = totalSpent,
-                            remaining = budgetedCategory.limit - totalSpent
-                        ),
-                        isOverLimit,
-                        onEditClick = { handleEdit(it) },
-                        onDeleteClick = { handleDelete(it) }
-                    )
-                }
-            }
+        // Progress bar showing budget utilization
+        BudgetUtilizationProgressBar(
+            totalBudgeted = totalBudgeted,
+            totalSpent = totalSpent,
+            budgetUtilization = budgetUtilization
+        )
+
+        if (filteredBudgetedCategories.isEmpty()) {
+            NoBudgetedCategoriesScreen(onBack)
+        } else {
+            BudgetedCategoriesList(
+                filteredBudgetedCategories,
+                expenseRecordsBudgeted,
+                currentYearMonth,
+                ::handleEdit,
+                ::handleDelete
+            )
         }
 
         if (editingCategory != null) {
@@ -177,8 +173,132 @@ fun BudgetedCategoriesScreen(
         }
     }
 }
+@Composable
+fun IncomeCard(totalIncome: Double) {
+    Box(
+        modifier = Modifier
+            .padding(16.dp)
+            .fillMaxWidth()
+            .background(Color(0xFFE3F2FD), RoundedCornerShape(8.dp)) // Light blue background
+            .padding(16.dp)
+    ) {
+        Column {
+            Text(
+                text = "Total Income",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1976D2) // Dark blue text
+            )
+            Text(
+                text = "$${String.format("%.2f", totalIncome)}",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF1976D2)
+            )
+        }
+    }
+}
+@Composable
+fun BudgetUtilizationProgressBar(
+    totalBudgeted: Double,
+    totalSpent: Double,
+    budgetUtilization: Float
+) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .fillMaxWidth()
+    ) {
+        Text(
+            text = "Budget Utilization",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+        LinearProgressIndicator(
+            progress = budgetUtilization,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .padding(vertical = 8.dp)
+                .border(1.dp, Color.Gray, shape = RoundedCornerShape(4.dp)),
+            color = if (budgetUtilization > 1f) Color.Red else Color.Green,
+            trackColor = Color.LightGray
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "Spent: $${String.format("%.2f", totalSpent)}",
+                fontSize = 14.sp,
+                color = Color.Black
+            )
+            Text(
+                text = "Budgeted: $${String.format("%.2f", totalBudgeted)}",
+                fontSize = 14.sp,
+                color = Color.Black
+            )
+        }
+    }
+}
+@Composable
+fun NoBudgetedCategoriesScreen(onBack: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = "No Budgeted Categories Available",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Gray
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onBack) {
+            Text(text = "Go Back")
+        }
+    }
+}
 
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun BudgetedCategoriesList(
+    filteredBudgetedCategories: List<BudgetedCategory>,
+    expenseRecordsBudgeted: List<ExpenseRecord>,
+    currentYearMonth: YearMonth,
+    onEditClick: (BudgetedCategory) -> Unit,
+    onDeleteClick: (BudgetedCategory) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        items(filteredBudgetedCategories) { budgetedCategory ->
+            val totalSpent = expenseRecordsBudgeted
+                .filter {
+                    it.category == budgetedCategory.category &&
+                            YearMonth.from(it.date) == YearMonth.from(budgetedCategory.monthYear)
+                }
+                .sumOf { it.amount }
 
+            val isOverLimit = totalSpent > budgetedCategory.limit
+            BudgetedCategoryRow(
+                budgetedCategory.copy(
+                    spent = totalSpent,
+                    remaining = budgetedCategory.limit - totalSpent
+                ),
+                isOverLimit,
+                onEditClick = { onEditClick(it) },
+                onDeleteClick = { onDeleteClick(it) }
+            )
+        }
+    }
+}
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable

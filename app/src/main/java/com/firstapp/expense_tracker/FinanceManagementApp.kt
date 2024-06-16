@@ -60,6 +60,7 @@ fun FinanceManagementApp() {
                 SetBudgetCard(
                     onClose = { navController.popBackStack() },
                     onBackHome = { navController.popBackStack() },
+                    expenseRecordsBudgeted = expenseRecords,
                     budgetedCategories = budgetedCategories, // Pass mutable list
                     onAddBudgetCategory = { budgetedCategory ->
                         budgetedCategories.add(budgetedCategory) // Directly add to mutable list

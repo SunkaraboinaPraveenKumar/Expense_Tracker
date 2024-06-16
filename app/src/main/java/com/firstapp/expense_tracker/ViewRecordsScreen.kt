@@ -53,7 +53,26 @@ fun ViewRecordsScreen(
 ) {
     var currentDate by remember { mutableStateOf(LocalDate.now()) }
     var currentFilterOption by remember { mutableStateOf(FilterOption.MONTHLY) }
+    // Define date range based on filter option
+    val dateRange = when (currentFilterOption) {
+        FilterOption.DAILY -> currentDate to currentDate
+        FilterOption.WEEKLY -> {
+            val startOfWeek = currentDate.with(java.time.DayOfWeek.MONDAY)
+            startOfWeek to startOfWeek.plusDays(6)
+        }
+        FilterOption.MONTHLY -> {
+            val startOfMonth = currentDate.withDayOfMonth(1)
+            val endOfMonth = currentDate.withDayOfMonth(currentDate.lengthOfMonth())
+            startOfMonth to endOfMonth
+        }
+    }
 
+    // Filter records based on date range
+    val filteredIncomeRecords = expenseRecords.filter { it.isIncome && it.dateTime.toLocalDate() in dateRange.first..dateRange.second }
+    val filteredExpenseRecords = expenseRecords.filter { !it.isIncome && it.dateTime.toLocalDate() in dateRange.first..dateRange.second }
+
+    val currentIncome = filteredIncomeRecords.sumOf { it.amount }
+    val currentExpense = filteredExpenseRecords.sumOf { it.amount }
     // Define the start of the week as Monday
     val startOfWeek = currentDate.with(java.time.DayOfWeek.MONDAY)
     val endOfWeek = startOfWeek.plusDays(6)
@@ -113,7 +132,12 @@ fun ViewRecordsScreen(
         )
 
         // Display income and expense for the current month
-        CurrentMonthCard(currentMonthIncome, currentMonthExpense)
+        CurrentMonthCard(
+            currentFilterOption = currentFilterOption,
+            dateRange = dateRange,
+            incomeRecords = filteredIncomeRecords,
+            expenseRecords = filteredExpenseRecords
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 

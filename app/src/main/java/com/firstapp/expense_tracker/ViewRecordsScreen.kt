@@ -3,6 +3,8 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,10 +18,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,8 +36,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
@@ -44,12 +51,27 @@ fun ViewRecordsScreen(
     onDelete: (ExpenseRecord) -> Unit,
     onBack: () -> Unit
 ) {
-    var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
+    var currentDate by remember { mutableStateOf(LocalDate.now()) }
+    var currentFilterOption by remember { mutableStateOf(FilterOption.MONTHLY) }
 
-    // Filter the records for the current month and year
-    val filteredRecords = expenseRecords.filter { record ->
-        val recordYearMonth = YearMonth.from(record.dateTime)
-        recordYearMonth == currentYearMonth
+    // Define the start of the week as Monday
+    val startOfWeek = currentDate.with(java.time.DayOfWeek.MONDAY)
+    val endOfWeek = startOfWeek.plusDays(6)
+
+    // Filter the records based on current filter option
+    val filteredRecords = remember(currentDate, currentFilterOption) {
+        when (currentFilterOption) {
+            FilterOption.DAILY -> expenseRecords.filter { record ->
+                record.dateTime.toLocalDate() == currentDate
+            }
+            FilterOption.WEEKLY -> expenseRecords.filter { record ->
+                val recordDate = record.dateTime.toLocalDate()
+                recordDate in startOfWeek..endOfWeek
+            }
+            FilterOption.MONTHLY -> expenseRecords.filter { record ->
+                YearMonth.from(record.dateTime) == YearMonth.from(currentDate)
+            }
+        }
     }
 
     // Calculate current month income and expenses
@@ -67,11 +89,27 @@ fun ViewRecordsScreen(
         .fillMaxSize()
         .padding(16.dp)) {
 
-        // Header with chevron navigation
-        Header(
-            currentYearMonth,
-            onPrevClick = { currentYearMonth = currentYearMonth.minusMonths(1) },
-            onNextClick = { currentYearMonth = currentYearMonth.plusMonths(1) }
+        // Header with chevron navigation and filter icon
+        HeaderRecord(
+            currentDate = currentDate,
+            currentFilterOption = currentFilterOption,
+            onPrevClick = {
+                currentDate = when (currentFilterOption) {
+                    FilterOption.DAILY -> currentDate.minusDays(1)
+                    FilterOption.WEEKLY -> currentDate.minusWeeks(1)
+                    FilterOption.MONTHLY -> currentDate.minusMonths(1)
+                }
+            },
+            onNextClick = {
+                currentDate = when (currentFilterOption) {
+                    FilterOption.DAILY -> currentDate.plusDays(1)
+                    FilterOption.WEEKLY -> currentDate.plusWeeks(1)
+                    FilterOption.MONTHLY -> currentDate.plusMonths(1)
+                }
+            },
+            onFilterOptionSelected = {
+                currentFilterOption = it
+            }
         )
 
         // Display income and expense for the current month
@@ -93,6 +131,127 @@ fun ViewRecordsScreen(
     }
 }
 
+
+enum class FilterOption {
+    DAILY,
+    WEEKLY,
+    MONTHLY
+}
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun HeaderRecord(
+    currentDate: LocalDate,
+    currentFilterOption: FilterOption,
+    onPrevClick: () -> Unit,
+    onNextClick: () -> Unit,
+    onFilterOptionSelected: (FilterOption) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    // Define the date formats for different filter options
+    val dailyFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d, yyyy")
+    val weeklyFormatter = DateTimeFormatter.ofPattern("'Week of' MMM d, yyyy")
+    val monthlyFormatter = DateTimeFormatter.ofPattern("MMMM, yyyy")
+
+    // Determine the formatter based on current filter option
+    val formatter = when (currentFilterOption) {
+        FilterOption.DAILY -> dailyFormatter
+        FilterOption.WEEKLY -> weeklyFormatter
+        FilterOption.MONTHLY -> monthlyFormatter
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFF5722))
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onPrevClick) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_chevron_left),
+                contentDescription = "Previous Date",
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        Text(
+            text = currentDate.format(formatter),
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier.weight(1f),
+            textAlign = TextAlign.Center
+        )
+
+        IconButton(onClick = onNextClick) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_chevron_right),
+                contentDescription = "Next Date",
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                imageVector = Icons.Default.List,
+                contentDescription = "Filter",
+                tint = Color.White,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                onClick = {
+                    onFilterOptionSelected(FilterOption.DAILY)
+                    expanded = false
+                }
+            ) {
+                Text("Daily")
+            }
+            DropdownMenuItem(
+                onClick = {
+                    onFilterOptionSelected(FilterOption.WEEKLY)
+                    expanded = false
+                }
+            ) {
+                Text("Weekly")
+            }
+            DropdownMenuItem(
+                onClick = {
+                    onFilterOptionSelected(FilterOption.MONTHLY)
+                    expanded = false
+                }
+            ) {
+                Text("Monthly")
+            }
+        }
+    }
+}
+@Composable
+fun DropdownMenuItem(
+    onClick: () -> Unit,
+    content: @Composable () -> Unit // Added a content lambda to provide flexibility
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(vertical = 8.dp, horizontal = 16.dp)
+        ) {
+            content() // Invoke the content lambda provided by the caller
+        }
+    }
+}
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ExpenseRecordItem(

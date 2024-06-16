@@ -2,16 +2,12 @@ package com.firstapp.expense_tracker
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,14 +16,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import java.time.LocalDate
 import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -39,11 +30,33 @@ fun AnalysisScreen(
     onNextClick: () -> Unit,
     onBack: () -> Unit
 ) {
-    // Filter expense records based on analysis type and selected month
+    var currentDate by remember { mutableStateOf(LocalDate.now()) }
+    var currentFilterOption by remember { mutableStateOf(FilterOption.MONTHLY) }
+
+    // Define the start and end dates based on the filter option
+    val startDate: LocalDate
+    val endDate: LocalDate
+
+    when (currentFilterOption) {
+        FilterOption.DAILY -> {
+            startDate = currentDate
+            endDate = currentDate
+        }
+        FilterOption.WEEKLY -> {
+            startDate = currentDate.with(java.time.DayOfWeek.MONDAY)
+            endDate = startDate.plusDays(6)
+        }
+        FilterOption.MONTHLY -> {
+            startDate = currentDate.withDayOfMonth(1)
+            endDate = currentDate.withDayOfMonth(currentDate.lengthOfMonth())
+        }
+    }
+
+    // Filter expense records based on the analysis type and the selected date range
     val filteredRecords = if (analysisType == "Income") {
-        expenseRecords.filter { it.isIncome && YearMonth.from(it.dateTime) == currentYearMonth }
+        expenseRecords.filter { it.isIncome && !it.dateTime.toLocalDate().isBefore(startDate) && !it.dateTime.toLocalDate().isAfter(endDate) }
     } else {
-        expenseRecords.filter { !it.isIncome && YearMonth.from(it.dateTime) == currentYearMonth }
+        expenseRecords.filter { !it.isIncome && !it.dateTime.toLocalDate().isBefore(startDate) && !it.dateTime.toLocalDate().isAfter(endDate) }
     }
 
     val groupedData = filteredRecords.groupBy({ it.category }, { it.amount.toFloat() })
@@ -55,9 +68,25 @@ fun AnalysisScreen(
         modifier = Modifier.fillMaxSize()
     ) {
         HeaderRecord(
-            currentYearMonth,
-            onPrevClick = onPrevClick,
-            onNextClick = onNextClick
+            currentDate = currentDate,
+            currentFilterOption = currentFilterOption,
+            onPrevClick = {
+                currentDate = when (currentFilterOption) {
+                    FilterOption.DAILY -> currentDate.minusDays(1)
+                    FilterOption.WEEKLY -> currentDate.minusWeeks(1)
+                    FilterOption.MONTHLY -> currentDate.minusMonths(1)
+                }
+            },
+            onNextClick = {
+                currentDate = when (currentFilterOption) {
+                    FilterOption.DAILY -> currentDate.plusDays(1)
+                    FilterOption.WEEKLY -> currentDate.plusWeeks(1)
+                    FilterOption.MONTHLY -> currentDate.plusMonths(1)
+                }
+            },
+            onFilterOptionSelected = {
+                currentFilterOption = it
+            }
         )
 
         CustomPieChart(
@@ -70,7 +99,6 @@ fun AnalysisScreen(
         )
     }
 }
-
 @Composable
 fun MainScreen(onIncomeClick: () -> Unit, onExpenseClick: () -> Unit) {
     Column(
@@ -121,44 +149,4 @@ fun MyApp(expenseRecords: List<ExpenseRecord>, onBack: () -> Unit) {
     }
 }
 
-// Assuming you have a `Header` function defined similarly to this:
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun HeaderRecord(
-    currentYearMonth: YearMonth,
-    onPrevClick: () -> Unit,
-    onNextClick: () -> Unit
-) {
-    val formatter = DateTimeFormatter.ofPattern("MMMM, yyyy")
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFFFF5722))
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onPrevClick) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_chevron_left),
-                contentDescription = "Previous Date",
-            )
-        }
 
-        Text(
-            text = currentYearMonth.format(formatter),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            modifier = Modifier.weight(1f),
-            textAlign= TextAlign.Center
-        )
-
-        IconButton(onClick = onNextClick) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_chevron_right),
-                contentDescription = "Next Date",
-            )
-        }
-    }
-}

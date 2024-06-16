@@ -1,5 +1,4 @@
 package com.firstapp.expense_tracker
-
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -12,25 +11,28 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-
 
 @Composable
 fun CustomPieChart(
     data: List<Pair<String, Float>>,
     modifier: Modifier = Modifier,
     analysisType: String,
-    onBack:()->Unit
+    onBack: () -> Unit
 ) {
     val totalValue = data.sumOf { it.second }
     val startAngle = -90f
@@ -70,10 +72,11 @@ fun CustomPieChart(
         Color(0xFF7FFF00)  // Chartreuse
     )
 
-
     val colorMap = remember { data.mapIndexed { index, pair -> pair.first to colors[index % colors.size] }.toMap() }
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState())
+    ) {
         Text(
             text = "$analysisType Analysis",
             style = MaterialTheme.typography.displayMedium,
@@ -126,7 +129,25 @@ fun CustomPieChart(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "$label: ${"%.1f".format((value / totalValue) * 100)}%",
+                        text = label,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .height(8.dp)
+                            .fillMaxWidth(0.7f) // Adjust the width to accommodate the percentage text
+                            .clip(CircleShape)
+                    ) {
+                        LinearProgressIndicator(
+                            progress = value / totalValue,
+                            color = colorMap[label] ?: Color.Gray,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = "${"%.1f".format((value / totalValue) * 100)}%",
                         color = Color.Black
                     )
                 }

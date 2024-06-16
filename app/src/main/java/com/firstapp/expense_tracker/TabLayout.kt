@@ -1,16 +1,22 @@
 package com.firstapp.expense_tracker
-
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 fun TabLayout(tabs: List<String>, selectedTabIndex: Int, onTabSelected: (Int) -> Unit) {
+    val isDarkTheme = isSystemInDarkTheme()
+    val selectedTextColor = if (isDarkTheme) Color.White else Color.Black
+    val unselectedTextColor = if (isDarkTheme) Color.LightGray else Color.DarkGray
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -28,11 +34,17 @@ fun TabLayout(tabs: List<String>, selectedTabIndex: Int, onTabSelected: (Int) ->
                     text = {
                         Text(
                             text = title,
-                            color = if (selectedTabIndex == index) Color.White else Color.LightGray
+                            color = if (selectedTabIndex == index) selectedTextColor else unselectedTextColor
                         )
                     }
                 )
             }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewTabLayout() {
+    TabLayout(tabs = listOf("Daily", "Monthly", "Calendar", "Notes"), selectedTabIndex = 0, onTabSelected = {})
 }

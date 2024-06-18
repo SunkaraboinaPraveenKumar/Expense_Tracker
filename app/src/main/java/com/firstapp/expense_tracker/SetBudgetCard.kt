@@ -110,17 +110,18 @@ fun SetBudgetCard(
         ) {
             Text(text = "View Budgeted Categories")
         }
+        Spacer(modifier = Modifier.height(16.dp))
+        Header(
+            currentDate = selectedMonthYear,
+            onPrevClick = { selectedMonthYear = selectedMonthYear.minusMonths(1) },
+            onNextClick = { selectedMonthYear = selectedMonthYear.plusMonths(1) }
+        )
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
             item {
-                Header(
-                    currentDate = selectedMonthYear,
-                    onPrevClick = { selectedMonthYear = selectedMonthYear.minusMonths(1) },
-                    onNextClick = { selectedMonthYear = selectedMonthYear.plusMonths(1) }
-                )
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = "Categories",

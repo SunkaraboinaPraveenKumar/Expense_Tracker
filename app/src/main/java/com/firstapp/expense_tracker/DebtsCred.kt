@@ -1,5 +1,4 @@
-package com.example.financemanagementapp
-
+package com.firstapp.expense_tracker
 import CreditForm
 import DebtForm
 import android.os.Build
@@ -17,6 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -35,12 +36,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.firstapp.expense_tracker.Credit
-import com.firstapp.expense_tracker.Debt
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,11 +62,9 @@ fun DebtsScreen(onBack:()->Unit) {
                 title = { Text(text = "Debts/Credits") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            painter = painterResource(id = com.google.android.material.R.drawable.ic_arrow_back_black_24),
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
+                        Icon(imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back Arrow",
+                            tint=Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -214,7 +210,9 @@ fun TransactionScreen(transactions: List<Transaction>, onBack: () -> Unit) {
 
 @Composable
 fun TransactionHistoryScreen(transactions: List<Transaction>) {
-    LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    LazyColumn(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)) {
         items(transactions) { transaction ->
             TransactionRow(transaction)
             Spacer(modifier = Modifier.height(8.dp))

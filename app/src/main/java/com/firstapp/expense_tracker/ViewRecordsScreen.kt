@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -53,62 +52,15 @@ fun ViewRecordsScreen(
 ) {
     var currentDate by remember { mutableStateOf(LocalDate.now()) }
     var currentFilterOption by remember { mutableStateOf(FilterOption.MONTHLY) }
-    // Define date range based on filter option
-    val dateRange = when (currentFilterOption) {
-        FilterOption.DAILY -> currentDate to currentDate
-        FilterOption.WEEKLY -> {
-            val startOfWeek = currentDate.with(java.time.DayOfWeek.MONDAY)
-            startOfWeek to startOfWeek.plusDays(6)
-        }
-        FilterOption.MONTHLY -> {
-            val startOfMonth = currentDate.withDayOfMonth(1)
-            val endOfMonth = currentDate.withDayOfMonth(currentDate.lengthOfMonth())
-            startOfMonth to endOfMonth
-        }
-    }
+    val dateRange = calculateDateRange(currentDate, currentFilterOption)
 
     // Filter records based on date range
-    val filteredIncomeRecords = expenseRecords.filter { it.isIncome && it.dateTime.toLocalDate() in dateRange.first..dateRange.second }
-    val filteredExpenseRecords = expenseRecords.filter { !it.isIncome && it.dateTime.toLocalDate() in dateRange.first..dateRange.second }
-
-    val currentIncome = filteredIncomeRecords.sumOf { it.amount }
-    val currentExpense = filteredExpenseRecords.sumOf { it.amount }
-    // Define the start of the week as Monday
-    val startOfWeek = currentDate.with(java.time.DayOfWeek.MONDAY)
-    val endOfWeek = startOfWeek.plusDays(6)
-
-    // Filter the records based on current filter option
-    val filteredRecords = remember(currentDate, currentFilterOption) {
-        when (currentFilterOption) {
-            FilterOption.DAILY -> expenseRecords.filter { record ->
-                record.dateTime.toLocalDate() == currentDate
-            }
-            FilterOption.WEEKLY -> expenseRecords.filter { record ->
-                val recordDate = record.dateTime.toLocalDate()
-                recordDate in startOfWeek..endOfWeek
-            }
-            FilterOption.MONTHLY -> expenseRecords.filter { record ->
-                YearMonth.from(record.dateTime) == YearMonth.from(currentDate)
-            }
-        }
-    }
-
-    // Calculate current month income and expenses
-    val currentMonthIncome = filteredRecords.filter { it.isIncome }
-        .sumOf { it.amount }
-    val currentMonthExpense = filteredRecords.filter { !it.isIncome }
-        .sumOf { it.amount }
+    val filteredRecords = filterRecords(expenseRecords, currentFilterOption, dateRange)
 
     // Sort records by date
-    val sortedExpenseRecords = filteredRecords.filter { record ->
-        record.accountType.isNotEmpty() && record.category.isNotEmpty()
-    }.sortedByDescending { it.dateTime }
+    val sortedExpenseRecords = filteredRecords.sortedByDescending { it.dateTime }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)) {
-
-        // Header with chevron navigation and filter icon
+    Column() {
         HeaderRecord(
             currentDate = currentDate,
             currentFilterOption = currentFilterOption,
@@ -131,23 +83,21 @@ fun ViewRecordsScreen(
             }
         )
 
-        // Display income and expense for the current month
         CurrentMonthCard(
             currentFilterOption = currentFilterOption,
             dateRange = dateRange,
-            incomeRecords = filteredIncomeRecords,
-            expenseRecords = filteredExpenseRecords
+            incomeRecords = filteredRecords.filter { it.isIncome },
+            expenseRecords = filteredRecords.filter { !it.isIncome }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // List of expense records
         LazyColumn {
             items(sortedExpenseRecords) { record ->
                 ExpenseRecordItem(
                     record = record,
                     onEdit = onEdit,
-                    onDelete = onDelete
+                    onDelete = { onDeleteRecord(record, onDelete) }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -155,6 +105,49 @@ fun ViewRecordsScreen(
     }
 }
 
+// Function to calculate date range based on filter option
+@RequiresApi(Build.VERSION_CODES.O)
+private fun calculateDateRange(
+    currentDate: LocalDate,
+    currentFilterOption: FilterOption
+): Pair<LocalDate, LocalDate> {
+    return when (currentFilterOption) {
+        FilterOption.DAILY -> currentDate to currentDate
+        FilterOption.WEEKLY -> {
+            val startOfWeek = currentDate.with(java.time.DayOfWeek.MONDAY)
+            startOfWeek to startOfWeek.plusDays(6)
+        }
+        FilterOption.MONTHLY -> {
+            val startOfMonth = currentDate.withDayOfMonth(1)
+            val endOfMonth = currentDate.withDayOfMonth(currentDate.lengthOfMonth())
+            startOfMonth to endOfMonth
+        }
+    }
+}
+
+// Function to filter records based on date range and filter option
+@RequiresApi(Build.VERSION_CODES.O)
+private fun filterRecords(
+    expenseRecords: List<ExpenseRecord>,
+    currentFilterOption: FilterOption,
+    dateRange: Pair<LocalDate, LocalDate>
+): List<ExpenseRecord> {
+    return expenseRecords.filter { record ->
+        when (currentFilterOption) {
+            FilterOption.DAILY -> record.dateTime.toLocalDate() == dateRange.first
+            FilterOption.WEEKLY -> {
+                val recordDate = record.dateTime.toLocalDate()
+                recordDate in dateRange.first..dateRange.second
+            }
+            FilterOption.MONTHLY -> YearMonth.from(record.dateTime) == YearMonth.from(dateRange.first)
+        }
+    }
+}
+
+// Function to handle deletion of record
+private fun onDeleteRecord(record: ExpenseRecord, onDelete: (ExpenseRecord) -> Unit) {
+    onDelete(record)
+}
 
 enum class FilterOption {
     DAILY,

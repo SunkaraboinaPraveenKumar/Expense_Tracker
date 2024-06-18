@@ -1,3 +1,4 @@
+
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
@@ -37,9 +38,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -124,7 +127,6 @@ fun BudgetedCategoriesScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
             .background(Color.White)
     ) {
         // Header to navigate between months
@@ -204,6 +206,13 @@ fun BudgetUtilizationProgressBar(
     totalSpent: Double,
     budgetUtilization: Float
 ) {
+    // Get the current density to convert mm to dp
+    val density = LocalDensity.current
+
+    // Convert mm to dp
+    val minWidthDp = with(density) { mmToDp(10f) }
+    val maxWidthDp = with(density) { mmToDp(20f) }
+
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -219,10 +228,10 @@ fun BudgetUtilizationProgressBar(
             progress = budgetUtilization,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(10.dp)
+                .height(maxWidthDp.coerceAtMost(minWidthDp)) // Ensure height is within 10mm to 20mm
                 .padding(vertical = 8.dp)
                 .border(1.dp, Color.Gray, shape = RoundedCornerShape(4.dp)),
-            color = if (budgetUtilization > 1f) Color.Red else Color.Green,
+            color = if (budgetUtilization >= 1f) Color.Red else Color.Green,
             trackColor = Color.LightGray
         )
         Row(
@@ -230,16 +239,36 @@ fun BudgetUtilizationProgressBar(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Spent: $${String.format("%.2f", totalSpent)}",
-                fontSize = 14.sp,
-                color = Color.Black
+                text = "Spent: $${formatAmount(totalSpent)}",
+                fontSize = 20.sp,
+                color = Color.Red // Spent amount in red
             )
             Text(
-                text = "Budgeted: $${String.format("%.2f", totalBudgeted)}",
-                fontSize = 14.sp,
-                color = Color.Black
+                text = "Budgeted: $${formatAmount(totalBudgeted)}",
+                fontSize = 20.sp,
+                color = Color.Green // Budgeted amount in green
             )
         }
+    }
+}
+
+// Function to convert millimeters to dp
+@Composable
+fun mmToDp(mm: Float): Dp {
+    val mmInInches = mm / 25.4f // Convert mm to inches
+    val dpi = LocalDensity.current.density * 80 // Get the screen DPI (density)
+    val pixels = mmInInches * dpi // Convert inches to pixels
+    return with(LocalDensity.current) { pixels.toDp() }
+}
+
+// Function to format amount, ensuring responsive design
+fun formatAmount(amount: Double): String {
+    return if (amount >= 1_000_000) {
+        String.format("%,.2fM", amount / 1_000_000)
+    } else if (amount >= 1_000) {
+        String.format("%,.2fK", amount / 1_000)
+    } else {
+        String.format("%,.2f", amount)
     }
 }
 @Composable
